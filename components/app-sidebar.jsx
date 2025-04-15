@@ -2,28 +2,39 @@
 
 import * as React from "react";
 import {
+  Activity,
+  AlignVerticalJustifyStart,
   ArrowUpCircleIcon,
   BedIcon,
   BookIcon,
+  BugPlay,
   BuildingIcon,
+  Bus,
   CalendarIcon,
   CreditCardIcon,
   DollarSignIcon,
   FileTextIcon,
+  GitPullRequestDraftIcon,
   HelpCircleIcon,
   HomeIcon,
   HotelIcon,
+  IceCream2Icon,
   LayoutDashboardIcon,
   MapPinIcon,
   MessageSquareIcon,
+  PartyPopper,
   PercentIcon,
   PieChartIcon,
   PlaneIcon,
+  SailboatIcon,
   SearchIcon,
+  SendToBack,
   Settings2Icon,
   ShieldIcon,
   TagIcon,
+  Touchpad,
   UsersIcon,
+  Vegan,
 } from "lucide-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -43,7 +54,7 @@ import {
 const data = {
   user: {
     name: "Admin User",
-    email: "admin@bookingapp.com",
+    email: "admin@alvista.com",
     avatar: "/avatars/admin.jpg",
   },
   navMain: [
@@ -137,81 +148,157 @@ const data = {
       ],
     },
   ],
-  navManagement: [
+  navMainListings: [
     {
-      title: "Property Management",
+      title: "Hotel & Apartment",
       icon: BuildingIcon,
-      url: "/admin/properties",
+      url: "/admin/hotel-and-aprtments",
       items: [
         {
           title: "Add Property",
-          url: "/admin/properties/add",
+          url: "/admin/hotel-and-aprtments/add",
         },
-        {
-          title: "Property List",
-          url: "/admin/properties/list",
-        },
+
         {
           title: "Property Types",
-          url: "/admin/properties/types",
+          url: "/admin/hotel-and-aprtments/types",
         },
         {
           title: "Amenities",
-          url: "/admin/properties/amenities",
+          url: "/admin/hotel-and-aprtments/amenities",
+        },
+        {
+          title: "Manage Rooms",
+          url: "/admin/hotel-and-aprtments/rooms",
         },
       ],
     },
     {
-      title: "Room Management",
+      title: "Homestays",
       icon: BedIcon,
-      url: "/admin/rooms",
+      url: "/admin/homestays",
       items: [
         {
           title: "Add Room",
           url: "/admin/rooms/add",
         },
         {
-          title: "Room List",
-          url: "/admin/rooms/list",
-        },
-        {
           title: "Room Types",
           url: "/admin/rooms/types",
+        },
+        {
+          title: "Amenities",
+          url: "/admin/rooms/amenities",
+        },
+      ],
+    },
+  ],
+  navSecondaryListings: [
+    {
+      title: "Transport",
+      icon: Bus,
+      url: "/admin/hotel-and-aprtments",
+      items: [
+        {
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
         },
       ],
     },
     {
-      title: "Locations",
-      icon: MapPinIcon,
-      url: "/admin/locations",
+      title: "Activities",
+      icon: Activity,
+      url: "/admin/hotel-and-aprtments",
       items: [
         {
-          title: "Countries",
-          url: "/admin/locations/countries",
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
         },
+      ],
+    },
+    {
+      title: "Food & Beverage",
+      icon: Vegan,
+      url: "/admin/hotel-and-aprtments",
+      items: [
         {
-          title: "Cities",
-          url: "/admin/locations/cities",
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
         },
+      ],
+    },
+    {
+      title: "Events",
+      icon: SailboatIcon,
+      url: "/admin/hotel-and-aprtments",
+      items: [
         {
-          title: "Points of Interest",
-          url: "/admin/locations/poi",
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
+        },
+      ],
+    },
+    {
+      title: "Local Artists",
+      icon: AlignVerticalJustifyStart,
+      url: "/admin/hotel-and-aprtments",
+      items: [
+        {
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
+        },
+      ],
+    },
+    {
+      title: "Shoppings",
+      icon: BugPlay,
+      url: "/admin/hotel-and-aprtments",
+      items: [
+        {
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
+        },
+      ],
+    },
+    {
+      title: "Licensed Tour Guides",
+      icon: IceCream2Icon,
+      url: "/admin/hotel-and-aprtments",
+      items: [
+        {
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
+        },
+      ],
+    },
+    {
+      title: "Others",
+      icon: IceCream2Icon,
+      url: "/admin/hotel-and-aprtments",
+      items: [
+        {
+          title: "Add Property",
+          url: "/admin/hotel-and-aprtments/add",
         },
       ],
     },
   ],
   navRevenue: [
     {
-      title: "Payments",
+      title: "Earnings Overview",
       icon: CreditCardIcon,
       url: "/admin/payments",
       items: [
         {
-          title: "Payment Methods",
+          title: "Platform Earnings",
           url: "/admin/payments/methods",
         },
         {
-          title: "Transactions",
+          title: "Host Earnings",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Commission Breakdown",
           url: "/admin/payments/transactions",
         },
         {
@@ -221,21 +308,105 @@ const data = {
       ],
     },
     {
-      title: "Pricing",
+      title: "Transactions",
       icon: DollarSignIcon,
       url: "/admin/pricing",
       items: [
         {
-          title: "Rate Plans",
+          title: "All Transactions",
           url: "/admin/pricing/rate-plans",
         },
         {
-          title: "Dynamic Pricing",
+          title: "Successful",
+          url: "/admin/pricing/dynamic",
+        },
+        {
+          title: "Failed",
           url: "/admin/pricing/dynamic",
         },
         {
           title: "Seasonal Rates",
           url: "/admin/pricing/seasonal",
+        },
+      ],
+    },
+    {
+      title: "Payouts",
+      icon: SendToBack,
+      url: "/admin/promotions",
+      items: [
+        {
+          title: "Pending Payouts",
+          url: "/admin/promotions/discounts",
+        },
+        {
+          title: "Completed Payouts",
+          url: "/admin/promotions/coupons",
+        },
+        {
+          title: "Scheduled Payouts",
+          url: "/admin/promotions/loyalty",
+        },
+      ],
+    },
+    {
+      title: "Refunds",
+      icon: GitPullRequestDraftIcon,
+      url: "/admin/promotions",
+      items: [
+        {
+          title: "All Refunds",
+          url: "/admin/promotions/discounts",
+        },
+        {
+          title: "Guest-Initiated Refunds",
+          url: "/admin/promotions/coupons",
+        },
+        {
+          title: "Host-Initiated Refunds",
+          url: "/admin/promotions/loyalty",
+        },
+      ],
+    },
+    {
+      title: "Financial Reports",
+      icon: Touchpad,
+      url: "/admin/promotions",
+      items: [
+        {
+          title: "Revenue Reports",
+          url: "/admin/promotions/discounts",
+        },
+        {
+          title: "Daily Earnings",
+          url: "/admin/promotions/coupons",
+        },
+        {
+          title: " Monthly Earnings",
+          url: "/admin/promotions/loyalty",
+        },
+        {
+          title: "  Refund Summary",
+          url: "/admin/promotions/loyalty",
+        },
+      ],
+    },
+    {
+      title: "Payment Settings",
+      icon: PartyPopper,
+      url: "/admin/promotions",
+      items: [
+        {
+          title: "Gateway Configuration",
+          url: "/admin/promotions/discounts",
+        },
+        {
+          title: "Currency & Tax Settings",
+          url: "/admin/promotions/coupons",
+        },
+        {
+          title: "Invoice Templates",
+          url: "/admin/promotions/loyalty",
         },
       ],
     },
@@ -288,19 +459,130 @@ const data = {
   ],
   documents: [
     {
-      name: "Reports",
-      url: "/admin/reports",
-      icon: FileTextIcon,
+      title: "Revenue Reports",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "Daily Revenue",
+          url: "/admin/payments/methods",
+        },
+        {
+          title: "Weekly Revenue",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Monthly Revenue",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Custom Date Range",
+          url: "/admin/payments/refunds",
+        },
+      ],
     },
     {
-      name: "Reviews",
-      url: "/admin/reviews",
-      icon: MessageSquareIcon,
+      title: "Booking Reports",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "Hotel Bookings",
+          url: "/admin/payments/methods",
+        },
+        {
+          title: "Homestays Bookings",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Cancellations",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Peak Season Analytics",
+          url: "/admin/payments/refunds",
+        },
+      ],
     },
     {
-      name: "Featured Listings",
-      url: "/admin/featured",
-      icon: TagIcon,
+      title: "User Reports",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "Registered Users",
+          url: "/admin/payments/methods",
+        },
+        {
+          title: " Active Guests",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Active Hosts",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "User Growth Trends",
+          url: "/admin/payments/refunds",
+        },
+      ],
+    },
+    {
+      title: "Payout Reports",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "Total Payouts",
+          url: "/admin/payments/methods",
+        },
+        {
+          title: "Pending Payouts",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Failed Payouts",
+          url: "/admin/payments/transactions",
+        },
+      ],
+    },
+    {
+      title: "Refund Reports",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "Total Refund",
+          url: "/admin/payments/methods",
+        },
+        {
+          title: "Refund by Reason",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Guest vs Host Refunds",
+          url: "/admin/payments/transactions",
+        },
+      ],
+    },
+    {
+      title: "Listing Reports",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "Most Viewed Listings",
+          url: "/admin/payments/methods",
+        },
+        {
+          title: "High Performing Hosts",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Listing Approval Stats",
+          url: "/admin/payments/transactions",
+        },
+      ],
     },
   ],
 };
@@ -326,8 +608,13 @@ export function AppSidebar({ ...props }) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments title="Booking Management" items={data.navBookings} />
-        <NavDocuments title="Property Management" items={data.navManagement} />
-        <NavDocuments title="Revenue Management" items={data.navRevenue} />
+        <NavDocuments title="Main Listings" items={data.navMainListings} />
+        <NavDocuments
+          title="Secondary Listings"
+          items={data.navSecondaryListings}
+        />
+        <NavDocuments title="Payments & Revenue" items={data.navRevenue} />
+        <NavDocuments title="Reports" items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
