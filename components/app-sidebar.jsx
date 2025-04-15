@@ -610,7 +610,7 @@ export function AppSidebar({ ...props }) {
         <NavDocuments title="Booking Management" items={data.navBookings} />
         <NavDocuments title="Main Listings" items={data.navMainListings} />
         <NavDocuments
-          title="Secondary Listings"
+          title="Secondary Listing"
           items={data.navSecondaryListings}
         />
         <NavDocuments title="Payments & Revenue" items={data.navRevenue} />
