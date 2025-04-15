@@ -24,6 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavDocuments({ title = "Documents", items }) {
   const { isMobile } = useSidebar();
@@ -77,9 +78,9 @@ export function NavDocuments({ title = "Documents", items }) {
                 {item.items.map((subItem) => (
                   <SidebarMenuItem key={subItem.title}>
                     <SidebarMenuButton asChild>
-                      <a href={subItem.url} className="text-sm py-1">
+                      <Link href={subItem.url} className="text-sm py-1">
                         <span>{subItem.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

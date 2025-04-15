@@ -16,11 +16,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { capitalizeString } from "@/lib/utils";
 import { Home } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Fragment } from "react";
 
 export function Breadcrumbs() {
   const pathname = usePathname();
   const pathnames = pathname.split("/");
+
   //   const pathnames = [
   //     "sef",
   //     "sefw",
@@ -45,6 +48,7 @@ export function Breadcrumbs() {
             <Home size={14} color="blue" />
           </BreadcrumbLink>
         </BreadcrumbItem>
+        <BreadcrumbSeparator />
 
         {middlepathnames.length > 4 && (
           <>
@@ -71,7 +75,20 @@ export function Breadcrumbs() {
             </BreadcrumbItem>
           </>
         )}
-        <BreadcrumbSeparator />
+
+        {middlepathnames.map((item, index) => {
+          const fullpathname = middlepathnames.slice(0, index + 1).join("/");
+          return (
+            <Fragment key={index}>
+              <BreadcrumbItem key={index}>
+                <Link href={`/${fullpathname}`} passHref legacyBehavior>
+                  <BreadcrumbLink>{capitalizeString(item)}</BreadcrumbLink>
+                </Link>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </Fragment>
+          );
+        })}
 
         {lastPathname && (
           <BreadcrumbItem>

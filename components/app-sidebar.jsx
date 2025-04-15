@@ -50,6 +50,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 const data = {
   user: {
@@ -88,62 +89,188 @@ const data = {
     {
       title: "All Bookings",
       icon: BookIcon,
-      isActive: true,
+      isActive: false,
       url: "/admin/bookings/all",
       items: [
         {
-          title: "Pending",
+          title: "Hotel",
           url: "/admin/bookings/pending",
         },
         {
-          title: "Confirmed",
+          title: "HomeStays",
           url: "/admin/bookings/confirmed",
         },
         {
-          title: "Cancelled",
+          title: "Apartments",
           url: "/admin/bookings/cancelled",
-        },
-        {
-          title: "Completed",
-          url: "/admin/bookings/completed",
         },
       ],
     },
     {
-      title: "Accommodations",
+      title: "Booking Status",
       icon: HotelIcon,
       url: "/admin/bookings/accommodations",
       items: [
         {
-          title: "Hotels",
+          title: "Upcoming",
           url: "/admin/bookings/accommodations/hotels",
         },
         {
-          title: "Apartments",
+          title: "Ongoing",
           url: "/admin/bookings/accommodations/apartments",
         },
         {
-          title: "Villas",
+          title: "Completed",
+          url: "/admin/bookings/accommodations/villas",
+        },
+        {
+          title: "Cancelled",
           url: "/admin/bookings/accommodations/villas",
         },
       ],
     },
     {
-      title: "Transportation",
+      title: "My Bookings",
+      icon: HotelIcon,
+      url: "/admin/bookings/accommodations",
+      items: [
+        {
+          title: "Upcoming",
+          url: "/admin/bookings/accommodations/hotels",
+        },
+        {
+          title: "Ongoing",
+          url: "/admin/bookings/accommodations/apartments",
+        },
+        {
+          title: "Completed",
+          url: "/admin/bookings/accommodations/villas",
+        },
+        {
+          title: "Cancelled",
+          url: "/admin/bookings/accommodations/villas",
+        },
+      ],
+    },
+    {
+      title: "Booking Actions",
+      icon: HotelIcon,
+      url: "/admin/bookings/accommodations",
+      items: [
+        {
+          title: "Accept / Decline Requests",
+          url: "/admin/bookings/accommodations/hotels",
+        },
+        {
+          title: "Mark as Checked-in",
+          url: "/admin/bookings/accommodations/apartments",
+        },
+        {
+          title: "Cancel Booking",
+          url: "/admin/bookings/accommodations/villas",
+        },
+      ],
+    },
+    {
+      title: "Reviews",
+      icon: HotelIcon,
+      url: "/admin/bookings/accommodations",
+      items: [
+        {
+          title: "Guest Reviews",
+          url: "/admin/bookings/accommodations/hotels",
+        },
+        {
+          title: "Write Reviews",
+          url: "/admin/bookings/accommodations/apartments",
+        },
+      ],
+    },
+    {
+      title: "Guest Booking History ",
+      icon: BookIcon,
+      isActive: false,
+      url: "/admin/bookings/all",
+      items: [
+        {
+          title: "Search by Guest",
+          url: "/admin/bookings/pending",
+        },
+        {
+          title: "Frequesnt Travelers",
+          url: "/admin/bookings/confirmed",
+        },
+      ],
+    },
+    {
+      title: "Host Booking Overview",
       icon: PlaneIcon,
       url: "/admin/bookings/transportation",
       items: [
         {
-          title: "Flights",
+          title: "By Host",
           url: "/admin/bookings/transportation/flights",
         },
         {
-          title: "Car Rentals",
+          title: "By Property",
           url: "/admin/bookings/transportation/car-rentals",
         },
         {
-          title: "Airport Transfers",
+          title: "High Performing Listings",
           url: "/admin/bookings/transportation/airport-transfers",
+        },
+      ],
+    },
+    {
+      title: "Cancellation Reports",
+      icon: PlaneIcon,
+      url: "/admin/bookings/transportation",
+      items: [
+        {
+          title: "Guest-Initiated",
+          url: "/admin/bookings/transportation/flights",
+        },
+        {
+          title: "Host-Initiated",
+          url: "/admin/bookings/transportation/car-rentals",
+        },
+        {
+          title: "System-Cancelled",
+          url: "/admin/bookings/transportation/airport-transfers",
+        },
+      ],
+    },
+    {
+      title: "Disputes",
+      icon: PlaneIcon,
+      url: "/admin/bookings/transportation",
+      items: [
+        {
+          title: "Open Disputes",
+          url: "/admin/bookings/transportation/flights",
+        },
+        {
+          title: "Resolved Disputes",
+          url: "/admin/bookings/transportation/car-rentals",
+        },
+        {
+          title: "Escalated to Admin",
+          url: "/admin/bookings/transportation/airport-transfers",
+        },
+      ],
+    },
+    {
+      title: "Special Requests",
+      icon: PlaneIcon,
+      url: "/admin/bookings/transportation",
+      items: [
+        {
+          title: "Late Check-in / Check-out",
+          url: "/admin/bookings/transportation/flights",
+        },
+        {
+          title: "Custom Amenities",
+          url: "/admin/bookings/transportation/car-rentals",
         },
       ],
     },
@@ -585,6 +712,34 @@ const data = {
       ],
     },
   ],
+  hostbookingitems: [
+    {
+      title: "Booking Calendar",
+      url: "/admin/dashboard",
+      icon: LayoutDashboardIcon,
+    },
+  ],
+  navusers: [
+    {
+      title: "Hosts",
+      icon: CreditCardIcon,
+      url: "/admin/payments",
+      items: [
+        {
+          title: "All Hosts",
+          url: "dashboard/user-management/hosts",
+        },
+        {
+          title: "Pending Approval",
+          url: "/admin/payments/transactions",
+        },
+        {
+          title: "Host Perfomance",
+          url: "/admin/payments/transactions",
+        },
+      ],
+    },
+  ],
 };
 
 export function AppSidebar({ ...props }) {
@@ -597,10 +752,10 @@ export function AppSidebar({ ...props }) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/admin">
+              <Link href="/admin">
                 <HomeIcon className="h-5 w-5" />
                 <span className="text-base font-semibold">BookingAdmin</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -608,6 +763,7 @@ export function AppSidebar({ ...props }) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments title="Booking Management" items={data.navBookings} />
+        <NavMain items={data.hostbookingitems} showquickcreate={false} />
         <NavDocuments title="Main Listings" items={data.navMainListings} />
         <NavDocuments
           title="Secondary Listing"
@@ -615,6 +771,7 @@ export function AppSidebar({ ...props }) {
         />
         <NavDocuments title="Payments & Revenue" items={data.navRevenue} />
         <NavDocuments title="Reports" items={data.documents} />
+        <NavDocuments title="Users Management" items={data.navusers} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
