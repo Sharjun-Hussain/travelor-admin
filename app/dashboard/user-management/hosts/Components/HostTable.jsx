@@ -71,157 +71,174 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
-// Mock API services - replace with your actual API calls
-const fetchHosts = async () => {
-  // Simulating API call delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return [
-    {
-      id: 1,
-      name: "Lanka Ocean View Resort",
-      email: "oceanview@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 3,
-      properties: 12,
-      status: "active",
-      joinDate: "2023-05-15",
-      rating: 4.8,
-      revenue: "LKR 14,320,000",
-      country: "Sri Lanka",
-      city: "Galle",
-      propertyTypes: ["Resort", "Villa"],
-      contactPerson: "Nimal Perera",
-    },
-    {
-      id: 2,
-      name: "Hill Country Lodge",
-      email: "hillcountry@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 1,
-      properties: 5,
-      status: "pending",
-      joinDate: "2023-10-22",
-      rating: 4.5,
-      revenue: "LKR 5,760,000",
-      country: "Sri Lanka",
-      city: "Nuwara Eliya",
-      propertyTypes: ["Lodge", "Cabin"],
-      contactPerson: "Dilani Fernando",
-    },
-    {
-      id: 3,
-      name: "Colombo Luxury Apartments",
-      email: "colomboluxury@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 2,
-      properties: 8,
-      status: "active",
-      joinDate: "2023-02-08",
-      rating: 4.7,
-      revenue: "LKR 9,870,000",
-      country: "Sri Lanka",
-      city: "Colombo",
-      propertyTypes: ["Apartment", "Penthouse"],
-      contactPerson: "Tharindu Jayasinghe",
-    },
-    {
-      id: 4,
-      name: "Bentota Beach Villas",
-      email: "bentotabeach@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 4,
-      properties: 16,
-      status: "inactive",
-      joinDate: "2022-11-30",
-      rating: 4.2,
-      revenue: "LKR 16,920,000",
-      country: "Sri Lanka",
-      city: "Bentota",
-      propertyTypes: ["Villa", "Bungalow"],
-      contactPerson: "Shehani De Silva",
-    },
-    {
-      id: 5,
-      name: "Ella Countryside Cabins",
-      email: "ellacabins@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 2,
-      properties: 9,
-      status: "active",
-      joinDate: "2023-07-14",
-      rating: 4.9,
-      revenue: "LKR 8,150,000",
-      country: "Sri Lanka",
-      city: "Ella",
-      propertyTypes: ["Cabin", "Cottage"],
-      contactPerson: "Kasun Wijesinghe",
-    },
-    {
-      id: 6,
-      name: "Skyline Towers Colombo",
-      email: "skylinecolombo@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 1,
-      properties: 24,
-      status: "active",
-      joinDate: "2023-08-01",
-      rating: 4.6,
-      revenue: "LKR 29,310,000",
-      country: "Sri Lanka",
-      city: "Colombo",
-      propertyTypes: ["Hotel", "Suite"],
-      contactPerson: "Ruwani Fernando",
-    },
-    {
-      id: 7,
-      name: "Tropical Paradise Lanka",
-      email: "tropicalparadise@lanka.com",
-      avatar: "/api/placeholder/30/30",
-      locations: 5,
-      properties: 15,
-      status: "active",
-      joinDate: "2023-03-22",
-      rating: 4.8,
-      revenue: "LKR 19,480,000",
-      country: "Sri Lanka",
-      city: "Trincomalee",
-      propertyTypes: ["Resort", "Overwater Villa"],
-      contactPerson: "Shanika Dissanayake",
-    },
-  ];
+const defaultColumns = [
+  {
+    key: "name",
+    label: "Host",
+    visible: true,
+    sortable: true,
+    render: (host) => (
+      <div className="flex items-center gap-3">
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={host.avatar} alt={host.name} />
+          <AvatarFallback className="bg-indigo-100 text-indigo-700">
+            {host.name
+              .split(" ")
+              .map((word) => word[0])
+              .join("")}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="font-medium text-slate-800">{host.name}</p>
+          <p className="text-sm text-slate-500">{host.email}</p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "properties",
+    label: "Properties",
+    visible: true,
+    sortable: true,
+    render: (host) => (
+      <div className="flex items-center">
+        <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
+          <Building2 className="h-3 w-3 text-indigo-700" />
+        </div>
+        <span className="font-medium">{host.properties}</span>
+        {host.locations > 1 && (
+          <Badge variant="outline" className="ml-2 text-xs">
+            {host.locations} locations
+          </Badge>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: "location",
+    label: "Location",
+    visible: true,
+    sortable: true,
+    render: (host) => (
+      <div className="flex items-center">
+        <MapPin className="h-3 w-3 text-slate-400 mr-1" />
+        <span>
+          {host.city}, {host.country}
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    visible: true,
+    sortable: false,
+    render: (host) => renderDefaultStatusBadge(host.status),
+  },
+  {
+    key: "joinDate",
+    label: "Join Date",
+    visible: true,
+    sortable: true,
+    render: (host) => (
+      <div className="flex items-center">
+        <Calendar className="h-3 w-3 text-slate-400 mr-1" />
+        {host.joinDate}
+      </div>
+    ),
+  },
+  {
+    key: "rating",
+    label: "Rating",
+    visible: true,
+    sortable: true,
+    render: (host) => renderDefaultRatingStars(host.rating),
+  },
+];
+
+const defaultStatusOptions = [
+  { value: "all", label: "All Statuses" },
+  { value: "active", label: "Active" },
+  { value: "pending", label: "Pending" },
+  { value: "inactive", label: "Inactive" },
+];
+
+export const renderDefaultStatusBadge = (status) => {
+  switch (status) {
+    case "active":
+      return (
+        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-0">
+          <CheckCircle2 className="mr-1 h-3 w-3" /> Active
+        </Badge>
+      );
+    case "pending":
+      return (
+        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-0">
+          <Clock className="mr-1 h-3 w-3" /> Pending
+        </Badge>
+      );
+    case "inactive":
+      return (
+        <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-0">
+          <XCircle className="mr-1 h-3 w-3" /> Inactive
+        </Badge>
+      );
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
 };
 
-const addHost = async (newHost) => {
-  // Simulating API call
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return {
-    id: Date.now(),
-    ...newHost,
-    properties: 0,
-    joinDate: new Date().toISOString().split("T")[0],
-    rating: 0,
-    revenue: "$0",
-    avatar: "/api/placeholder/30/30",
-  };
+const renderDefaultRatingStars = (rating) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+
+  return (
+    <div className="flex items-center">
+      <span className="font-medium mr-2">{rating}</span>
+      <div className="flex text-amber-400">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${
+              i < fullStars
+                ? "fill-current"
+                : i === fullStars && hasHalfStar
+                ? "fill-current opacity-50"
+                : "text-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 };
 
-const updateHost = async (updatedHost) => {
-  // Simulating API call
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return updatedHost;
-};
-
-const deleteHost = async (id) => {
-  // Simulating API call
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return id;
-};
-
-export default function HostListing() {
+const HostManagement = ({
+  fetchHosts,
+  addHost,
+  updateHost,
+  deleteHost,
+  columns = defaultColumns,
+  statusOptions = defaultStatusOptions,
+  defaultPageSize = 5,
+  enableTabs = true,
+  enableSearch = true,
+  enableFilters = true,
+  enableExport = true,
+  customFilters,
+  onHostClick,
+  renderStatusBadge = renderDefaultStatusBadge,
+  renderRatingStars = renderDefaultRatingStars,
+  additionalTabs = [],
+  headerTitle = "Host Management",
+  headerDescription = "Manage all your property hosts and partners",
+  addButtonLabel = "Add New Host",
+  emptyState,
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
   const [sortConfig, setSortConfig] = useState({
     key: "name",
     direction: "asc",
@@ -257,45 +274,54 @@ export default function HostListing() {
   const addMutation = useMutation({
     mutationFn: addHost,
     onSuccess: (newHost) => {
-      queryClient.setQueryData(["hosts"], (old) => [...old, newHost]);
-      toast({
-        title: "Success!",
+      queryClient.setQueryData(["hosts"], (old = []) => [...old, newHost]);
+      toast.success("Host added successfully", {
         description: `${newHost.name} has been added to your host list.`,
-        variant: "success",
       });
       setIsAddDialogOpen(false);
       resetForm();
+    },
+    onError: (error) => {
+      toast.error("Failed to add host", {
+        description: "There was an error adding the host. Please try again.",
+      });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: updateHost,
     onSuccess: (updatedHost) => {
-      queryClient.setQueryData(["hosts"], (old) =>
+      queryClient.setQueryData(["hosts"], (old = []) =>
         old.map((host) => (host.id === updatedHost.id ? updatedHost : host))
       );
-      toast({
-        title: "Changes saved",
+      toast.success("Changes saved", {
         description: `${updatedHost.name}'s information has been updated.`,
-        variant: "success",
       });
       setIsEditDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to update host", {
+        description: "There was an error updating the host. Please try again.",
+      });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteHost,
     onSuccess: (id) => {
-      queryClient.setQueryData(["hosts"], (old) =>
+      queryClient.setQueryData(["hosts"], (old = []) =>
         old.filter((host) => host.id !== id)
       );
-      toast({
-        title: "Host removed",
+      toast.error("Host removed", {
         description:
           "The host has been successfully removed from your platform.",
-        variant: "success",
       });
       setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete host", {
+        description: "There was an error deleting the host. Please try again.",
+      });
     },
   });
 
@@ -304,8 +330,10 @@ export default function HostListing() {
     const matchesSearch =
       host.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       host.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      host.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      host.city?.toLowerCase().includes(searchQuery.toLowerCase());
+      (host.country &&
+        host.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (host.city &&
+        host.city.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus =
       statusFilter === "all" || host.status === statusFilter;
@@ -379,11 +407,15 @@ export default function HostListing() {
 
   const handleUpdateHost = (e) => {
     e.preventDefault();
-    updateMutation.mutate({ ...currentHost, ...formData });
+    if (currentHost) {
+      updateMutation.mutate({ ...currentHost, ...formData });
+    }
   };
 
   const handleDeleteHost = () => {
-    deleteMutation.mutate(currentHost.id);
+    if (currentHost) {
+      deleteMutation.mutate(currentHost.id);
+    }
   };
 
   const openEditDialog = (host) => {
@@ -403,6 +435,9 @@ export default function HostListing() {
   const openViewDialog = (host) => {
     setCurrentHost(host);
     setIsViewDialogOpen(true);
+    if (onHostClick) {
+      onHostClick(host);
+    }
   };
 
   const openDeleteDialog = (host) => {
@@ -410,65 +445,15 @@ export default function HostListing() {
     setIsDeleteDialogOpen(true);
   };
 
-  // Status badge rendering
-  const renderStatusBadge = (status) => {
-    switch (status) {
-      case "active":
-        return (
-          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-0">
-            <CheckCircle2 className="mr-1 h-3 w-3" /> Active
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-0">
-            <Clock className="mr-1 h-3 w-3" /> Pending
-          </Badge>
-        );
-      case "inactive":
-        return (
-          <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-100 border-0">
-            <XCircle className="mr-1 h-3 w-3" /> Inactive
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  // Rating stars rendering
-  const renderRatingStars = (rating) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    return (
-      <div className="flex items-center">
-        <span className="font-medium mr-2">{rating}</span>
-        <div className="flex text-amber-400">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-4 w-4 ${
-                i < fullStars
-                  ? "fill-current"
-                  : i === fullStars && hasHalfStar
-                  ? "fill-current opacity-50"
-                  : "text-gray-300"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center">
-          <div className="h-12 w-12 rounded-full border-4 border-t-indigo-500 border-r-indigo-300 border-b-indigo-500 border-l-indigo-300 animate-spin"></div>
-          <div className="mt-4 text-lg font-medium text-slate-700">
-            Loading host data...
+      <div className="container items-center mx-auto py-8 px-4">
+        <div className="flex items-center justify-center h-64 lg:h-96">
+          <div className="flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full border-4 border-t-indigo-500 border-r-indigo-300 border-b-indigo-500 border-l-indigo-300 animate-spin"></div>
+            <div className="mt-4 text-lg font-medium text-slate-700">
+              Loading host data...
+            </div>
           </div>
         </div>
       </div>
@@ -477,7 +462,7 @@ export default function HostListing() {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center">
         <div className="p-6 max-w-sm bg-white rounded-lg border border-red-200 shadow-md">
           <XCircle className="h-12 w-12 text-red-500 mb-4" />
           <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900">
@@ -495,19 +480,19 @@ export default function HostListing() {
     );
   }
 
+  const visibleColumns = columns.filter((col) => col.visible !== false);
+
   return (
-    <div className="container  mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col gap-6">
         {/* Header Section with gradient */}
         <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg p-8 mb-4">
           <div className="flex md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-5xl  font-bold tracking-tight">
-                Host Management
+              <h1 className="text-5xl font-bold tracking-tight">
+                {headerTitle}
               </h1>
-              <p className=" mt-2">
-                Manage all your property hosts and partners
-              </p>
+              <p className="mt-2">{headerDescription}</p>
             </div>
             <Button
               onClick={() => {
@@ -516,241 +501,156 @@ export default function HostListing() {
               }}
               className="bg-white text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-colors shadow-md"
             >
-              <Plus className="w-4 h-4 mr-2" /> Add New Host
+              <Plus className="w-4 h-4 mr-2" /> {addButtonLabel}
             </Button>
           </div>
         </div>
 
-        {/* Dashboard Statistics */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <Card className="bg-gradient-to-br from-indigo-50 to-white border-indigo-100">
-            <CardContent className="flex flex-row items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-indigo-600">
-                  Total Hosts
-                </p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {hosts.length}
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-indigo-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100">
-            <CardContent className="flex flex-row items-center justify-between pt-6">
-              <div>
-                <p className="text-sm font-medium text-purple-600">
-                  Active Hosts
-                </p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {hosts.filter((h) => h.status === "active").length}
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-pink-50 to-white border-pink-100">
-            <CardContent className="flex flex-row items-center justify-between pt-6">
-              <div>
-                <p className="text-sm font-medium text-pink-600">
-                  Total Properties
-                </p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {hosts.reduce((sum, host) => sum + host.properties, 0)}
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-pink-100 rounded-full flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-pink-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100">
-            <CardContent className="flex flex-row items-center justify-between pt-6">
-              <div>
-                <p className="text-sm font-medium text-amber-600">
-                  Average Rating
-                </p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {(
-                    hosts.reduce((sum, host) => sum + host.rating, 0) /
-                    hosts.length
-                  ).toFixed(1)}
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-amber-100 rounded-full flex items-center justify-center">
-                <Star className="h-6 w-6 text-amber-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div> */}
-
         {/* Tabs */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-4 bg-slate-100">
-            <TabsTrigger value="all" className="data-[state=active]:bg-white">
-              All Hosts
-            </TabsTrigger>
-            <TabsTrigger
-              value="active"
-              className="data-[state=active]:bg-white"
-            >
-              Active
-            </TabsTrigger>
-            <TabsTrigger
-              value="pending"
-              className="data-[state=active]:bg-white"
-            >
-              Pending Approval
-            </TabsTrigger>
-            <TabsTrigger
-              value="inactive"
-              className="data-[state=active]:bg-white"
-            >
-              Inactive
-            </TabsTrigger>
-          </TabsList>
+          {enableTabs && (
+            <TabsList className="mb-4 bg-slate-100">
+              <TabsTrigger value="all" className="data-[state=active]:bg-white">
+                All Hosts
+              </TabsTrigger>
+              <TabsTrigger
+                value="active"
+                className="data-[state=active]:bg-white"
+              >
+                Active
+              </TabsTrigger>
+              <TabsTrigger
+                value="pending"
+                className="data-[state=active]:bg-white"
+              >
+                Pending Approval
+              </TabsTrigger>
+              <TabsTrigger
+                value="inactive"
+                className="data-[state=active]:bg-white"
+              >
+                Inactive
+              </TabsTrigger>
+              {additionalTabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="data-[state=active]:bg-white"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )}
 
           <TabsContent value="all" className="mt-0">
             {/* Search & Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-              <div className="md:col-span-6 lg:col-span-5">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Search hosts by name, email, location..."
-                    className="pl-10 border-slate-300 focus-visible:ring-indigo-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+            {(enableSearch || enableFilters) && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+                {enableSearch && (
+                  <div className="md:col-span-6 lg:col-span-5">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input
+                        placeholder="Search hosts by name, email, location..."
+                        className="pl-10 border-slate-300 focus-visible:ring-indigo-500"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div
+                  className={`${
+                    enableSearch
+                      ? "md:col-span-6 lg:col-span-7"
+                      : "md:col-span-12"
+                  } flex flex-wrap justify-start md:justify-end gap-2`}
+                >
+                  {enableFilters && (
+                    <>
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(value) => setStatusFilter(value)}
+                      >
+                        <SelectTrigger className="w-[140px] border-slate-300">
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button variant="outline" className="border-slate-300">
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        More Filters
+                      </Button>
+                    </>
+                  )}
+
+                  {customFilters}
+
+                  {enableExport && (
+                    <Button variant="outline" className="border-slate-300">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  )}
                 </div>
               </div>
-              <div className="md:col-span-6 lg:col-span-7 flex flex-wrap justify-start md:justify-end gap-2">
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) => setStatusFilter(value)}
-                >
-                  <SelectTrigger className="w-[140px] border-slate-300">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" className="border-slate-300">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  More Filters
-                </Button>
-
-                <Button variant="outline" className="border-slate-300">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
+            )}
 
             {/* Host Listing Table */}
-            <div className="overflow-hidden border rounded-md ">
-              <CardContent className="p-0 ">
+            <div className="overflow-hidden border rounded-md">
+              <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader className="bg-slate-50">
                       <TableRow className="hover:bg-slate-50 border-slate-200">
-                        <TableHead
-                          className="font-semibold text-slate-700 cursor-pointer"
-                          onClick={() => requestSort("name")}
-                        >
-                          <div className="flex items-center">
-                            Host
-                            {sortConfig.key === "name" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden md:table-cell cursor-pointer"
-                          onClick={() => requestSort("properties")}
-                        >
-                          <div className="flex items-center">
-                            Properties
-                            {sortConfig.key === "properties" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("country")}
-                        >
-                          <div className="flex items-center">
-                            Location
-                            {sortConfig.key === "country" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-slate-700">
-                          Status
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("joinDate")}
-                        >
-                          <div className="flex items-center">
-                            Join Date
-                            {sortConfig.key === "joinDate" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden xl:table-cell cursor-pointer"
-                          onClick={() => requestSort("rating")}
-                        >
-                          <div className="flex items-center">
-                            Rating
-                            {sortConfig.key === "rating" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
+                        {visibleColumns.map((column) => (
+                          <TableHead
+                            key={column.key}
+                            className={`font-semibold text-slate-700 ${
+                              column.sortable ? "cursor-pointer" : ""
+                            } ${
+                              column.key === "properties"
+                                ? "hidden md:table-cell"
+                                : ""
+                            } ${
+                              column.key === "location"
+                                ? "hidden lg:table-cell"
+                                : ""
+                            } ${
+                              column.key === "joinDate"
+                                ? "hidden lg:table-cell"
+                                : ""
+                            } ${
+                              column.key === "rating"
+                                ? "hidden xl:table-cell"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              column.sortable && requestSort(column.key)
+                            }
+                          >
+                            <div className="flex items-center">
+                              {column.label}
+                              {sortConfig.key === column.key && (
+                                <ChevronDown
+                                  className={`ml-1 h-4 w-4 ${
+                                    sortConfig.direction === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                />
+                              )}
+                            </div>
+                          </TableHead>
+                        ))}
                         <TableHead className="text-right font-semibold text-slate-700">
                           Actions
                         </TableHead>
@@ -760,10 +660,11 @@ export default function HostListing() {
                       {paginatedHosts.length === 0 ? (
                         <TableRow>
                           <TableCell
-                            colSpan={7}
+                            colSpan={visibleColumns.length + 1}
                             className="text-center py-10 text-slate-500"
                           >
-                            No hosts found matching your search criteria.
+                            {emptyState ||
+                              "No hosts found matching your search criteria."}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -772,68 +673,37 @@ export default function HostListing() {
                             key={host.id}
                             className="hover:bg-slate-50/50 border-slate-200"
                           >
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                  <AvatarImage
-                                    src={host.avatar}
-                                    alt={host.name}
-                                  />
-                                  <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                                    {host.name
-                                      .split(" ")
-                                      .map((word) => word[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium text-slate-800">
-                                    {host.name}
-                                  </p>
-                                  <p className="text-sm text-slate-500">
-                                    {host.email}
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="flex items-center">
-                                <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
-                                  <Building2 className="h-3 w-3 text-indigo-700" />
-                                </div>
-                                <span className="font-medium">
-                                  {host.properties}
-                                </span>
-                                {host.locations > 1 && (
-                                  <Badge
-                                    variant="outline"
-                                    className="ml-2 text-xs"
-                                  >
-                                    {host.locations} locations
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <div className="flex items-center">
-                                <MapPin className="h-3 w-3 text-slate-400 mr-1" />
-                                <span>
-                                  {host.city}, {host.country}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {renderStatusBadge(host.status)}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-slate-600">
-                              <div className="flex items-center">
-                                <Calendar className="h-3 w-3 text-slate-400 mr-1" />
-                                {host.joinDate}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              {renderRatingStars(host.rating)}
-                            </TableCell>
+                            {visibleColumns.map((column) => (
+                              <TableCell
+                                key={`${host.id}-${column.key}`}
+                                className={`
+                                  ${
+                                    column.key === "properties"
+                                      ? "hidden md:table-cell"
+                                      : ""
+                                  }
+                                  ${
+                                    column.key === "location"
+                                      ? "hidden lg:table-cell"
+                                      : ""
+                                  }
+                                  ${
+                                    column.key === "joinDate"
+                                      ? "hidden lg:table-cell text-slate-600"
+                                      : ""
+                                  }
+                                  ${
+                                    column.key === "rating"
+                                      ? "hidden xl:table-cell"
+                                      : ""
+                                  }
+                                `}
+                              >
+                                {column.render
+                                  ? column.render(host)
+                                  : host[column.key]}
+                              </TableCell>
+                            ))}
                             <TableCell className="text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -913,902 +783,478 @@ export default function HostListing() {
             </div>
           </TabsContent>
 
-          <TabsContent value="active" className="mt-0">
-            {/* Search & Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-              <div className="md:col-span-6 lg:col-span-5">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Search hosts by name, email, location..."
-                    className="pl-10 border-slate-300 focus-visible:ring-indigo-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="md:col-span-6 lg:col-span-7 flex flex-wrap justify-start md:justify-end gap-2">
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) => setStatusFilter(value)}
-                >
-                  <SelectTrigger className="w-[140px] border-slate-300">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" className="border-slate-300">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  More Filters
-                </Button>
-
-                <Button variant="outline" className="border-slate-300">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
-
-            {/* Host Listing Table */}
-            <div className="overflow-hidden border rounded-md ">
-              <CardContent className="p-0 ">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-slate-50">
-                      <TableRow className="hover:bg-slate-50 border-slate-200">
-                        <TableHead
-                          className="font-semibold text-slate-700 cursor-pointer"
-                          onClick={() => requestSort("name")}
-                        >
-                          <div className="flex items-center">
-                            Host
-                            {sortConfig.key === "name" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
+          {enableTabs && (
+            <>
+              <TabsContent value="active" className="mt-0">
+                {/* Content for active hosts tab */}
+                <div className="overflow-hidden border rounded-md">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow className="hover:bg-slate-50 border-slate-200">
+                            {visibleColumns.map((column) => (
+                              <TableHead
+                                key={column.key}
+                                className={`font-semibold text-slate-700 ${
+                                  column.sortable ? "cursor-pointer" : ""
+                                } ${
+                                  column.key === "properties"
+                                    ? "hidden md:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "location"
+                                    ? "hidden lg:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "joinDate"
+                                    ? "hidden lg:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "rating"
+                                    ? "hidden xl:table-cell"
                                     : ""
                                 }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden md:table-cell cursor-pointer"
-                          onClick={() => requestSort("properties")}
-                        >
-                          <div className="flex items-center">
-                            Properties
-                            {sortConfig.key === "properties" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("country")}
-                        >
-                          <div className="flex items-center">
-                            Location
-                            {sortConfig.key === "country" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-slate-700">
-                          Status
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("joinDate")}
-                        >
-                          <div className="flex items-center">
-                            Join Date
-                            {sortConfig.key === "joinDate" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden xl:table-cell cursor-pointer"
-                          onClick={() => requestSort("rating")}
-                        >
-                          <div className="flex items-center">
-                            Rating
-                            {sortConfig.key === "rating" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-right font-semibold text-slate-700">
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedHosts.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={7}
-                            className="text-center py-10 text-slate-500"
-                          >
-                            No hosts found matching your search criteria.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedHosts.map((host) => (
-                          <TableRow
-                            key={host.id}
-                            className="hover:bg-slate-50/50 border-slate-200"
-                          >
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                  <AvatarImage
-                                    src={host.avatar}
-                                    alt={host.name}
-                                  />
-                                  <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                                    {host.name
-                                      .split(" ")
-                                      .map((word) => word[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium text-slate-800">
-                                    {host.name}
-                                  </p>
-                                  <p className="text-sm text-slate-500">
-                                    {host.email}
-                                  </p>
+                                onClick={() =>
+                                  column.sortable && requestSort(column.key)
+                                }
+                              >
+                                <div className="flex items-center">
+                                  {column.label}
+                                  {sortConfig.key === column.key && (
+                                    <ChevronDown
+                                      className={`ml-1 h-4 w-4 ${
+                                        sortConfig.direction === "desc"
+                                          ? "rotate-180"
+                                          : ""
+                                      }`}
+                                    />
+                                  )}
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="flex items-center">
-                                <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
-                                  <Building2 className="h-3 w-3 text-indigo-700" />
-                                </div>
-                                <span className="font-medium">
-                                  {host.properties}
-                                </span>
-                                {host.locations > 1 && (
-                                  <Badge
-                                    variant="outline"
-                                    className="ml-2 text-xs"
-                                  >
-                                    {host.locations} locations
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <div className="flex items-center">
-                                <MapPin className="h-3 w-3 text-slate-400 mr-1" />
-                                <span>
-                                  {host.city}, {host.country}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {renderStatusBadge(host.status)}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-slate-600">
-                              <div className="flex items-center">
-                                <Calendar className="h-3 w-3 text-slate-400 mr-1" />
-                                {host.joinDate}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              {renderRatingStars(host.rating)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="w-48"
-                                >
-                                  <DropdownMenuItem
-                                    onClick={() => openViewDialog(host)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => openEditDialog(host)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                                    Edit Host
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => openDeleteDialog(host)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                  >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete Host
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
+                              </TableHead>
+                            ))}
+                            <TableHead className="text-right font-semibold text-slate-700">
+                              Actions
+                            </TableHead>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-              <CardFooter className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100">
-                <div className="text-sm text-slate-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="h-8 px-3"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="h-8 px-3"
-                  >
-                    Next <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </CardFooter>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="pending" className="mt-0">
-            {/* Search & Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-              <div className="md:col-span-6 lg:col-span-5">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Search hosts by name, email, location..."
-                    className="pl-10 border-slate-300 focus-visible:ring-indigo-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="md:col-span-6 lg:col-span-7 flex flex-wrap justify-start md:justify-end gap-2">
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) => setStatusFilter(value)}
-                >
-                  <SelectTrigger className="w-[140px] border-slate-300">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" className="border-slate-300">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  More Filters
-                </Button>
-
-                <Button variant="outline" className="border-slate-300">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
-
-            {/* Host Listing Table */}
-            <div className="overflow-hidden border rounded-md ">
-              <CardContent className="p-0 ">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-slate-50">
-                      <TableRow className="hover:bg-slate-50 border-slate-200">
-                        <TableHead
-                          className="font-semibold text-slate-700 cursor-pointer"
-                          onClick={() => requestSort("name")}
-                        >
-                          <div className="flex items-center">
-                            Host
-                            {sortConfig.key === "name" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden md:table-cell cursor-pointer"
-                          onClick={() => requestSort("properties")}
-                        >
-                          <div className="flex items-center">
-                            Properties
-                            {sortConfig.key === "properties" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("country")}
-                        >
-                          <div className="flex items-center">
-                            Location
-                            {sortConfig.key === "country" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-slate-700">
-                          Status
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("joinDate")}
-                        >
-                          <div className="flex items-center">
-                            Join Date
-                            {sortConfig.key === "joinDate" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden xl:table-cell cursor-pointer"
-                          onClick={() => requestSort("rating")}
-                        >
-                          <div className="flex items-center">
-                            Rating
-                            {sortConfig.key === "rating" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-right font-semibold text-slate-700">
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedHosts.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={7}
-                            className="text-center py-10 text-slate-500"
-                          >
-                            No hosts found matching your search criteria.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedHosts.map((host) => (
-                          <TableRow
-                            key={host.id}
-                            className="hover:bg-slate-50/50 border-slate-200"
-                          >
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                  <AvatarImage
-                                    src={host.avatar}
-                                    alt={host.name}
-                                  />
-                                  <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                                    {host.name
-                                      .split(" ")
-                                      .map((word) => word[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium text-slate-800">
-                                    {host.name}
-                                  </p>
-                                  <p className="text-sm text-slate-500">
-                                    {host.email}
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="flex items-center">
-                                <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
-                                  <Building2 className="h-3 w-3 text-indigo-700" />
-                                </div>
-                                <span className="font-medium">
-                                  {host.properties}
-                                </span>
-                                {host.locations > 1 && (
-                                  <Badge
-                                    variant="outline"
-                                    className="ml-2 text-xs"
-                                  >
-                                    {host.locations} locations
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <div className="flex items-center">
-                                <MapPin className="h-3 w-3 text-slate-400 mr-1" />
-                                <span>
-                                  {host.city}, {host.country}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {renderStatusBadge(host.status)}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-slate-600">
-                              <div className="flex items-center">
-                                <Calendar className="h-3 w-3 text-slate-400 mr-1" />
-                                {host.joinDate}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              {renderRatingStars(host.rating)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="w-48"
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedHosts.filter(
+                            (host) => host.status === "active"
+                          ).length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={visibleColumns.length + 1}
+                                className="text-center py-10 text-slate-500"
+                              >
+                                {emptyState || "No active hosts found."}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            paginatedHosts
+                              .filter((host) => host.status === "active")
+                              .map((host) => (
+                                <TableRow
+                                  key={host.id}
+                                  className="hover:bg-slate-50/50 border-slate-200"
                                 >
-                                  <DropdownMenuItem
-                                    onClick={() => openViewDialog(host)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => openEditDialog(host)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                                    Edit Host
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => openDeleteDialog(host)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                  >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete Host
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
+                                  {visibleColumns.map((column) => (
+                                    <TableCell
+                                      key={`${host.id}-${column.key}`}
+                                      className={`
+                                        ${
+                                          column.key === "properties"
+                                            ? "hidden md:table-cell"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "location"
+                                            ? "hidden lg:table-cell"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "joinDate"
+                                            ? "hidden lg:table-cell text-slate-600"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "rating"
+                                            ? "hidden xl:table-cell"
+                                            : ""
+                                        }
+                                      `}
+                                    >
+                                      {column.render
+                                        ? column.render(host)
+                                        : host[column.key]}
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className="text-right">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent
+                                        align="end"
+                                        className="w-48"
+                                      >
+                                        <DropdownMenuItem
+                                          onClick={() => openViewDialog(host)}
+                                          className="cursor-pointer"
+                                        >
+                                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
+                                          View Details
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => openEditDialog(host)}
+                                          className="cursor-pointer"
+                                        >
+                                          <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                                          Edit Host
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => openDeleteDialog(host)}
+                                          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                        >
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Delete Host
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="pending" className="mt-0">
+                {/* Content for pending hosts tab */}
+                <div className="overflow-hidden border rounded-md">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow className="hover:bg-slate-50 border-slate-200">
+                            {visibleColumns.map((column) => (
+                              <TableHead
+                                key={column.key}
+                                className={`font-semibold text-slate-700 ${
+                                  column.sortable ? "cursor-pointer" : ""
+                                } ${
+                                  column.key === "properties"
+                                    ? "hidden md:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "location"
+                                    ? "hidden lg:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "joinDate"
+                                    ? "hidden lg:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "rating"
+                                    ? "hidden xl:table-cell"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  column.sortable && requestSort(column.key)
+                                }
+                              >
+                                <div className="flex items-center">
+                                  {column.label}
+                                  {sortConfig.key === column.key && (
+                                    <ChevronDown
+                                      className={`ml-1 h-4 w-4 ${
+                                        sortConfig.direction === "desc"
+                                          ? "rotate-180"
+                                          : ""
+                                      }`}
+                                    />
+                                  )}
+                                </div>
+                              </TableHead>
+                            ))}
+                            <TableHead className="text-right font-semibold text-slate-700">
+                              Actions
+                            </TableHead>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-              <CardFooter className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100">
-                <div className="text-sm text-slate-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="h-8 px-3"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="h-8 px-3"
-                  >
-                    Next <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </CardFooter>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="inactive" className="mt-0">
-            {/* Search & Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-              <div className="md:col-span-6 lg:col-span-5">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Search hosts by name, email, location..."
-                    className="pl-10 border-slate-300 focus-visible:ring-indigo-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="md:col-span-6 lg:col-span-7 flex flex-wrap justify-start md:justify-end gap-2">
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) => setStatusFilter(value)}
-                >
-                  <SelectTrigger className="w-[140px] border-slate-300">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" className="border-slate-300">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  More Filters
-                </Button>
-
-                <Button variant="outline" className="border-slate-300">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
-
-            {/* Host Listing Table */}
-            <div className="overflow-hidden border rounded-md ">
-              <CardContent className="p-0 ">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-slate-50">
-                      <TableRow className="hover:bg-slate-50 border-slate-200">
-                        <TableHead
-                          className="font-semibold text-slate-700 cursor-pointer"
-                          onClick={() => requestSort("name")}
-                        >
-                          <div className="flex items-center">
-                            Host
-                            {sortConfig.key === "name" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden md:table-cell cursor-pointer"
-                          onClick={() => requestSort("properties")}
-                        >
-                          <div className="flex items-center">
-                            Properties
-                            {sortConfig.key === "properties" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("country")}
-                        >
-                          <div className="flex items-center">
-                            Location
-                            {sortConfig.key === "country" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-slate-700">
-                          Status
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden lg:table-cell cursor-pointer"
-                          onClick={() => requestSort("joinDate")}
-                        >
-                          <div className="flex items-center">
-                            Join Date
-                            {sortConfig.key === "joinDate" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold text-slate-700 hidden xl:table-cell cursor-pointer"
-                          onClick={() => requestSort("rating")}
-                        >
-                          <div className="flex items-center">
-                            Rating
-                            {sortConfig.key === "rating" && (
-                              <ChevronDown
-                                className={`ml-1 h-4 w-4 ${
-                                  sortConfig.direction === "desc"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-right font-semibold text-slate-700">
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedHosts.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={7}
-                            className="text-center py-10 text-slate-500"
-                          >
-                            No hosts found matching your search criteria.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedHosts.map((host) => (
-                          <TableRow
-                            key={host.id}
-                            className="hover:bg-slate-50/50 border-slate-200"
-                          >
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                  <AvatarImage
-                                    src={host.avatar}
-                                    alt={host.name}
-                                  />
-                                  <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                                    {host.name
-                                      .split(" ")
-                                      .map((word) => word[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium text-slate-800">
-                                    {host.name}
-                                  </p>
-                                  <p className="text-sm text-slate-500">
-                                    {host.email}
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="flex items-center">
-                                <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
-                                  <Building2 className="h-3 w-3 text-indigo-700" />
-                                </div>
-                                <span className="font-medium">
-                                  {host.properties}
-                                </span>
-                                {host.locations > 1 && (
-                                  <Badge
-                                    variant="outline"
-                                    className="ml-2 text-xs"
-                                  >
-                                    {host.locations} locations
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <div className="flex items-center">
-                                <MapPin className="h-3 w-3 text-slate-400 mr-1" />
-                                <span>
-                                  {host.city}, {host.country}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {renderStatusBadge(host.status)}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-slate-600">
-                              <div className="flex items-center">
-                                <Calendar className="h-3 w-3 text-slate-400 mr-1" />
-                                {host.joinDate}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              {renderRatingStars(host.rating)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="w-48"
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedHosts.filter(
+                            (host) => host.status === "pending"
+                          ).length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={visibleColumns.length + 1}
+                                className="text-center py-10 text-slate-500"
+                              >
+                                {emptyState || "No pending hosts found."}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            paginatedHosts
+                              .filter((host) => host.status === "pending")
+                              .map((host) => (
+                                <TableRow
+                                  key={host.id}
+                                  className="hover:bg-slate-50/50 border-slate-200"
                                 >
-                                  <DropdownMenuItem
-                                    onClick={() => openViewDialog(host)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => openEditDialog(host)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                                    Edit Host
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => openDeleteDialog(host)}
-                                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                  >
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Delete Host
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
+                                  {visibleColumns.map((column) => (
+                                    <TableCell
+                                      key={`${host.id}-${column.key}`}
+                                      className={`
+                                        ${
+                                          column.key === "properties"
+                                            ? "hidden md:table-cell"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "location"
+                                            ? "hidden lg:table-cell"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "joinDate"
+                                            ? "hidden lg:table-cell text-slate-600"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "rating"
+                                            ? "hidden xl:table-cell"
+                                            : ""
+                                        }
+                                      `}
+                                    >
+                                      {column.render
+                                        ? column.render(host)
+                                        : host[column.key]}
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className="text-right">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent
+                                        align="end"
+                                        className="w-48"
+                                      >
+                                        <DropdownMenuItem
+                                          onClick={() => openViewDialog(host)}
+                                          className="cursor-pointer"
+                                        >
+                                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
+                                          View Details
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => openEditDialog(host)}
+                                          className="cursor-pointer"
+                                        >
+                                          <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                                          Edit Host
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => openDeleteDialog(host)}
+                                          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                        >
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Delete Host
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="inactive" className="mt-0">
+                {/* Content for inactive hosts tab */}
+                <div className="overflow-hidden border rounded-md">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow className="hover:bg-slate-50 border-slate-200">
+                            {visibleColumns.map((column) => (
+                              <TableHead
+                                key={column.key}
+                                className={`font-semibold text-slate-700 ${
+                                  column.sortable ? "cursor-pointer" : ""
+                                } ${
+                                  column.key === "properties"
+                                    ? "hidden md:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "location"
+                                    ? "hidden lg:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "joinDate"
+                                    ? "hidden lg:table-cell"
+                                    : ""
+                                } ${
+                                  column.key === "rating"
+                                    ? "hidden xl:table-cell"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  column.sortable && requestSort(column.key)
+                                }
+                              >
+                                <div className="flex items-center">
+                                  {column.label}
+                                  {sortConfig.key === column.key && (
+                                    <ChevronDown
+                                      className={`ml-1 h-4 w-4 ${
+                                        sortConfig.direction === "desc"
+                                          ? "rotate-180"
+                                          : ""
+                                      }`}
+                                    />
+                                  )}
+                                </div>
+                              </TableHead>
+                            ))}
+                            <TableHead className="text-right font-semibold text-slate-700">
+                              Actions
+                            </TableHead>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedHosts.filter(
+                            (host) => host.status === "inactive"
+                          ).length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={visibleColumns.length + 1}
+                                className="text-center py-10 text-slate-500"
+                              >
+                                {emptyState || "No inactive hosts found."}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            paginatedHosts
+                              .filter((host) => host.status === "inactive")
+                              .map((host) => (
+                                <TableRow
+                                  key={host.id}
+                                  className="hover:bg-slate-50/50 border-slate-200"
+                                >
+                                  {visibleColumns.map((column) => (
+                                    <TableCell
+                                      key={`${host.id}-${column.key}`}
+                                      className={`
+                                        ${
+                                          column.key === "properties"
+                                            ? "hidden md:table-cell"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "location"
+                                            ? "hidden lg:table-cell"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "joinDate"
+                                            ? "hidden lg:table-cell text-slate-600"
+                                            : ""
+                                        }
+                                        ${
+                                          column.key === "rating"
+                                            ? "hidden xl:table-cell"
+                                            : ""
+                                        }
+                                      `}
+                                    >
+                                      {column.render
+                                        ? column.render(host)
+                                        : host[column.key]}
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className="text-right">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent
+                                        align="end"
+                                        className="w-48"
+                                      >
+                                        <DropdownMenuItem
+                                          onClick={() => openViewDialog(host)}
+                                          className="cursor-pointer"
+                                        >
+                                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
+                                          View Details
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => openEditDialog(host)}
+                                          className="cursor-pointer"
+                                        >
+                                          <Edit className="mr-2 h-4 w-4 text-slate-500" />
+                                          Edit Host
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => openDeleteDialog(host)}
+                                          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                        >
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Delete Host
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
                 </div>
-              </CardContent>
-              <CardFooter className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100">
-                <div className="text-sm text-slate-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="h-8 px-3"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="h-8 px-3"
-                  >
-                    Next <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </CardFooter>
-            </div>
-          </TabsContent>
+              </TabsContent>
+            </>
+          )}
+
+          {/* Additional tabs */}
+          {additionalTabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="mt-0">
+              {tab.content}
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
 
@@ -1912,9 +1358,13 @@ export default function HostListing() {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      {statusOptions
+                        .filter((option) => option.value !== "all")
+                        .map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -2052,9 +1502,13 @@ export default function HostListing() {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      {statusOptions
+                        .filter((option) => option.value !== "all")
+                        .map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -2183,33 +1637,37 @@ export default function HostListing() {
                     </div>
                   </div>
 
-                  <div className="pt-2">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">
-                      Property Types
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {currentHost.propertyTypes?.map((type, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="bg-indigo-50 border-indigo-200 text-indigo-700"
-                        >
-                          {type}
-                        </Badge>
-                      ))}
+                  {currentHost.propertyTypes && (
+                    <div className="pt-2">
+                      <h4 className="text-sm font-medium text-slate-700 mb-2">
+                        Property Types
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {currentHost.propertyTypes.map((type, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="bg-indigo-50 border-indigo-200 text-indigo-700"
+                          >
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="pt-2">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">
-                      Revenue
-                    </h4>
-                    <div className="flex items-center text-slate-600">
-                      <span className="text-lg font-medium text-emerald-600">
-                        {currentHost.revenue}
-                      </span>
+                  {currentHost.revenue && (
+                    <div className="pt-2">
+                      <h4 className="text-sm font-medium text-slate-700 mb-2">
+                        Revenue
+                      </h4>
+                      <div className="flex items-center text-slate-600">
+                        <span className="text-lg font-medium text-emerald-600">
+                          {currentHost.revenue}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </ScrollArea>
@@ -2217,7 +1675,7 @@ export default function HostListing() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              onClick={() => openEditDialog(currentHost)}
+              onClick={() => currentHost && openEditDialog(currentHost)}
             >
               <Edit className="h-4 w-4 mr-2" /> Edit
             </Button>
@@ -2254,10 +1712,12 @@ export default function HostListing() {
                 </p>
               </div>
             </div>
-            <p className="text-sm text-slate-600">
-              Note: This will affect {currentHost?.properties} properties and
-              might impact ongoing bookings.
-            </p>
+            {currentHost?.properties && (
+              <p className="text-sm text-slate-600">
+                Note: This will affect {currentHost.properties} properties and
+                might impact ongoing bookings.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -2280,4 +1740,6 @@ export default function HostListing() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default HostManagement;

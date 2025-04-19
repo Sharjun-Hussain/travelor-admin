@@ -64,10 +64,10 @@ export function NavDocuments({ title = "Documents", items }) {
                     )}
                   </div>
                 ) : (
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 )}
               </SidebarMenuButton>
             </SidebarMenuItem>

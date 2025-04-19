@@ -64,26 +64,6 @@ const data = {
       url: "/admin/dashboard",
       icon: LayoutDashboardIcon,
     },
-    {
-      title: "Bookings",
-      url: "/admin/bookings",
-      icon: CalendarIcon,
-    },
-    {
-      title: "Properties",
-      url: "/admin/properties",
-      icon: BuildingIcon,
-    },
-    {
-      title: "Users",
-      url: "/admin/users",
-      icon: UsersIcon,
-    },
-    {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: PieChartIcon,
-    },
   ],
   navBookings: [
     {
@@ -106,29 +86,7 @@ const data = {
         },
       ],
     },
-    {
-      title: "Booking Status",
-      icon: HotelIcon,
-      url: "/admin/bookings/accommodations",
-      items: [
-        {
-          title: "Upcoming",
-          url: "/admin/bookings/accommodations/hotels",
-        },
-        {
-          title: "Ongoing",
-          url: "/admin/bookings/accommodations/apartments",
-        },
-        {
-          title: "Completed",
-          url: "/admin/bookings/accommodations/villas",
-        },
-        {
-          title: "Cancelled",
-          url: "/admin/bookings/accommodations/villas",
-        },
-      ],
-    },
+
     {
       title: "My Bookings",
       icon: HotelIcon,
@@ -256,21 +214,6 @@ const data = {
         {
           title: "Escalated to Admin",
           url: "/admin/bookings/transportation/airport-transfers",
-        },
-      ],
-    },
-    {
-      title: "Special Requests",
-      icon: PlaneIcon,
-      url: "/admin/bookings/transportation",
-      items: [
-        {
-          title: "Late Check-in / Check-out",
-          url: "/admin/bookings/transportation/flights",
-        },
-        {
-          title: "Custom Amenities",
-          url: "/admin/bookings/transportation/car-rentals",
         },
       ],
     },
@@ -723,21 +666,7 @@ const data = {
     {
       title: "Hosts",
       icon: CreditCardIcon,
-      url: "/admin/payments",
-      items: [
-        {
-          title: "All Hosts",
-          url: "dashboard/user-management/hosts",
-        },
-        {
-          title: "Pending Approval",
-          url: "/admin/payments/transactions",
-        },
-        {
-          title: "Host Perfomance",
-          url: "/admin/payments/transactions",
-        },
-      ],
+      url: "/dashboard/user-management/hosts",
     },
   ],
 };

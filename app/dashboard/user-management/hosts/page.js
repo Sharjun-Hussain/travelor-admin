@@ -1,12 +1,10 @@
-"use client";
 import React from "react";
-
-import HostTable from "./Components/HostTable";
+import HostPageWrapper from "./HostPageWrapper";
 
 const page = () => {
   return (
     <div>
-      <HostTable />
+      <HostPageWrapper />
     </div>
   );
 };
