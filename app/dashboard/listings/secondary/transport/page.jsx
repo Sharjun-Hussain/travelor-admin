@@ -1,180 +1,112 @@
-// app/travel-types/page.tsx
-import { Plus } from "lucide-react";
-
+"use client";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { CheckCheck, PenOff, Plus, Send, ToggleRight } from "lucide-react";
+import { TravelListingTable } from "./TravelTable";
+import TravelAddModel from "./TravelAddModel";
+axios.defaults.withCredentials = true;
 
-export default function TravelTypesPage() {
-  // Mock data - replace with your actual data fetching
-  const travelTypes = [
-    {
-      id: "1",
-      name: "Bus",
-      description: "Public bus transportation",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "2",
-      name: "Car",
-      description: "Personal car travel",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "3",
-      name: "Train",
-      description: "Railway transportation",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "4",
-      name: "Airplane",
-      description: "Air travel",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "5",
-      name: "Bicycle",
-      description: "Bike travel",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "6",
-      name: "Walking",
-      description: "On foot travel",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+export default function DemoPage() {
+  const [TravelTypesData, setTravelTypesData] = useState([]);
+  const [loading, setloading] = useState(false);
+  const [OpenModal, setOpenModal] = useState(false);
+
+  const handleChildData = (TravelTypesData) => {
+    if (!TravelTypesData) {
+      console.log("No data to update or create.");
+      return;
+    }
+
+    if (TravelTypesData.length === 0) {
+      setTravelTypesData(TravelTypesData);
+      return;
+    }
+    setTravelTypesData((prevCategory) => {
+      const categoryIndex = prevCategory.findIndex(
+        (o) => o.id === TravelTypesData.id
+      );
+      if (categoryIndex >= 0) {
+        // Update existing office
+        const updatedCategories = [...prevCategory];
+        updatedCategories[categoryIndex] = TravelTypesData;
+        return updatedCategories;
+      } else {
+        // Add new office
+        return [...prevCategory, TravelTypesData];
+      }
+    });
+  };
+
+  const handleDelete = (categoryid) => {
+    setTravelTypesData((prev) =>
+      prev.filter((category) => category.id !== categoryid)
+    );
+  };
+
+  useEffect(() => {
+    const fetchTravelTypesData = async () => {
+      setloading(true);
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/Subcategory`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          withXSRFToken: true,
+          withCredentials: true,
+        }
+      );
+
+      if (res.status == 200) {
+        console.log(res.data);
+        setTravelTypesData(res.data.data);
+        setloading(false);
+      }
+    };
+    fetchTravelTypesData();
+  }, []);
 
   return (
-    <div className="container  px-4 py-10">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Travel Types</h1>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button onclick variant="default" size="sm" className="ml-auto">
-              <Plus className="mr-2 h-4 w-4" /> Add Travel Type
+    <div className=" w-full h-full  ">
+      <div className=" mx-4  border-black-400 border px-4 py-4 mt-4 rounded-lg">
+        <div className="flex items-center border-b-black-400 border-b pb-3 ">
+          <div className="flex flex-col">
+            <h2 className="text-xl font-bold">Travel Types</h2>
+            <h2 className="text-sm font-semibold  text-gray-700 dark:text-gray-400 ">
+              Manage your Travel Types Here
+            </h2>
+          </div>
+          <div className="ms-auto">
+            <Button
+              className="pe-2 ps-1"
+              onClick={() => setOpenModal(true)}
+              variant="outline"
+            >
+              {" "}
+              <Plus size={15} className="me-1" />
+              Add Travel Types
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Travel Type</DialogTitle>
-              <DialogDescription>
-                Fill in the details for the new travel type.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="name" className="text-right">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  placeholder="Bus, Car, etc."
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="description" className="text-right">
-                  Description
-                </label>
-                <Input
-                  id="description"
-                  placeholder="Description"
-                  className="col-span-3"
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit">Save</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableCaption>A list of available travel types.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Updated At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {travelTypes.map((type) => (
-              <TableRow key={type.id}>
-                <TableCell className="font-medium">{type.name}</TableCell>
-                <TableCell>{type.description}</TableCell>
-                <TableCell>{type.createdAt.toLocaleDateString()}</TableCell>
-                <TableCell>{type.updatedAt.toLocaleDateString()}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-ellipsis"
-                        >
-                          <circle cx="12" cy="12" r="1" />
-                          <circle cx="19" cy="12" r="1" />
-                          <circle cx="5" cy="12" r="1" />
-                        </svg>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div>
+          <div>
+            <TravelListingTable
+              onDelete={handleDelete}
+              data={TravelTypesData}
+              loading={loading}
+              onUpdate={handleChildData}
+            />
+          </div>
+        </div>
+        <TravelAddModel
+          onUpdate={handleChildData}
+          OpenModal={OpenModal}
+          setOpenModal={setOpenModal}
+        />
+
+        {/* <DataTable columns={columns} data={data} /> */}
       </div>
     </div>
   );
