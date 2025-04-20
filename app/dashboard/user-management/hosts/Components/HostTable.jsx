@@ -95,25 +95,25 @@ const defaultColumns = [
       </div>
     ),
   },
-  {
-    key: "properties",
-    label: "Properties",
-    visible: true,
-    sortable: true,
-    render: (host) => (
-      <div className="flex items-center">
-        <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
-          <Building2 className="h-3 w-3 text-indigo-700" />
-        </div>
-        <span className="font-medium">{host.properties}</span>
-        {host.locations > 1 && (
-          <Badge variant="outline" className="ml-2 text-xs">
-            {host.locations} locations
-          </Badge>
-        )}
-      </div>
-    ),
-  },
+  // {
+  //   key: "properties",
+  //   label: "Properties",
+  //   visible: true,
+  //   sortable: true,
+  //   render: (host) => (
+  //     <div className="flex items-center">
+  //       <div className="h-6 w-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
+  //         <Building2 className="h-3 w-3 text-indigo-700" />
+  //       </div>
+  //       <span className="font-medium">{host.properties}</span>
+  //       {host.locations > 1 && (
+  //         <Badge variant="outline" className="ml-2 text-xs">
+  //           {host.locations} locations
+  //         </Badge>
+  //       )}
+  //     </div>
+  //   ),
+  // },
   {
     key: "location",
     label: "Location",
@@ -147,13 +147,13 @@ const defaultColumns = [
       </div>
     ),
   },
-  {
-    key: "rating",
-    label: "Rating",
-    visible: true,
-    sortable: true,
-    render: (host) => renderDefaultRatingStars(host.rating),
-  },
+  // {
+  //   key: "rating",
+  //   label: "Rating",
+  //   visible: true,
+  //   sortable: true,
+  //   render: (host) => renderDefaultRatingStars(host.rating),
+  // },
 ];
 
 const defaultStatusOptions = [
@@ -462,8 +462,8 @@ const HostManagement = ({
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center">
-        <div className="p-6 max-w-sm bg-white rounded-lg border border-red-200 shadow-md">
+      <div className="flex h-screen  items-center justify-center">
+        <div className="p-6 max-w-3xl bg-white rounded-lg border border-red-200 shadow-md">
           <XCircle className="h-12 w-12 text-red-500 mb-4" />
           <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900">
             Error loading data

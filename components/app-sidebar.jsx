@@ -33,6 +33,7 @@ import {
   ShieldIcon,
   TagIcon,
   Touchpad,
+  Users,
   UsersIcon,
   Vegan,
 } from "lucide-react";
@@ -129,75 +130,26 @@ const data = {
         },
       ],
     },
-    {
-      title: "Reviews",
-      icon: HotelIcon,
-      url: "/admin/bookings/accommodations",
-      items: [
-        {
-          title: "Guest Reviews",
-          url: "/admin/bookings/accommodations/hotels",
-        },
-        {
-          title: "Write Reviews",
-          url: "/admin/bookings/accommodations/apartments",
-        },
-      ],
-    },
-    {
-      title: "Guest Booking History ",
-      icon: BookIcon,
-      isActive: false,
-      url: "/admin/bookings/all",
-      items: [
-        {
-          title: "Search by Guest",
-          url: "/admin/bookings/pending",
-        },
-        {
-          title: "Frequesnt Travelers",
-          url: "/admin/bookings/confirmed",
-        },
-      ],
-    },
-    {
-      title: "Host Booking Overview",
-      icon: PlaneIcon,
-      url: "/admin/bookings/transportation",
-      items: [
-        {
-          title: "By Host",
-          url: "/admin/bookings/transportation/flights",
-        },
-        {
-          title: "By Property",
-          url: "/admin/bookings/transportation/car-rentals",
-        },
-        {
-          title: "High Performing Listings",
-          url: "/admin/bookings/transportation/airport-transfers",
-        },
-      ],
-    },
-    {
-      title: "Cancellation Reports",
-      icon: PlaneIcon,
-      url: "/admin/bookings/transportation",
-      items: [
-        {
-          title: "Guest-Initiated",
-          url: "/admin/bookings/transportation/flights",
-        },
-        {
-          title: "Host-Initiated",
-          url: "/admin/bookings/transportation/car-rentals",
-        },
-        {
-          title: "System-Cancelled",
-          url: "/admin/bookings/transportation/airport-transfers",
-        },
-      ],
-    },
+
+    // {
+    //   title: "Cancellation Reports",
+    //   icon: PlaneIcon,
+    //   url: "/admin/bookings/transportation",
+    //   items: [
+    //     {
+    //       title: "Guest-Initiated",
+    //       url: "/admin/bookings/transportation/flights",
+    //     },
+    //     {
+    //       title: "Host-Initiated",
+    //       url: "/admin/bookings/transportation/car-rentals",
+    //     },
+    //     {
+    //       title: "System-Cancelled",
+    //       url: "/admin/bookings/transportation/airport-transfers",
+    //     },
+    //   ],
+    // },
     {
       title: "Disputes",
       icon: PlaneIcon,
@@ -267,90 +219,42 @@ const data = {
     {
       title: "Transport",
       icon: Bus,
-      url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
+      url: "/dashboard/listings/secondary/transport",
     },
     {
       title: "Activities",
       icon: Activity,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
     {
       title: "Food & Beverage",
       icon: Vegan,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
     {
       title: "Events",
       icon: SailboatIcon,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
     {
       title: "Local Artists",
       icon: AlignVerticalJustifyStart,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
     {
       title: "Shoppings",
       icon: BugPlay,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
     {
       title: "Licensed Tour Guides",
       icon: IceCream2Icon,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
     {
       title: "Others",
       icon: IceCream2Icon,
       url: "/admin/hotel-and-aprtments",
-      items: [
-        {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
-        },
-      ],
     },
   ],
   navRevenue: [
@@ -480,32 +384,8 @@ const data = {
         },
       ],
     },
-    {
-      title: "Promotions",
-      icon: PercentIcon,
-      url: "/admin/promotions",
-      items: [
-        {
-          title: "Discounts",
-          url: "/admin/promotions/discounts",
-        },
-        {
-          title: "Coupons",
-          url: "/admin/promotions/coupons",
-        },
-        {
-          title: "Loyalty Program",
-          url: "/admin/promotions/loyalty",
-        },
-      ],
-    },
   ],
   navSecondary: [
-    {
-      title: "User Management",
-      url: "/admin/users",
-      icon: UsersIcon,
-    },
     {
       title: "Role Management",
       url: "/admin/roles",
@@ -667,6 +547,11 @@ const data = {
       title: "Hosts",
       icon: CreditCardIcon,
       url: "/dashboard/user-management/hosts",
+    },
+    {
+      title: "Customers",
+      icon: Users,
+      url: "/dashboard/user-management/customers",
     },
   ],
 };

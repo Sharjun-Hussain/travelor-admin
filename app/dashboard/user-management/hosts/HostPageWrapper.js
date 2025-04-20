@@ -11,6 +11,17 @@ const HostPageWrapper = () => {
   const fetchHosts = async () => {
     // Simulating API call delay
     await new Promise((resolve) => setTimeout(resolve, 500));
+    // await await fetch(`/api/hosts/${id}`, {
+    //   method: "GET",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(rest),
+    // });
+
+    // if (!response.ok) {
+    //   throw new Error("Failed to update host");
+    // }
+
+    // return await response.json();
     return [
       {
         id: 1,
@@ -150,6 +161,7 @@ const HostPageWrapper = () => {
   const deleteHost = async (id) => {
     // Simulating API call
     await new Promise((resolve) => setTimeout(resolve, 600));
+    alert(id);
     return id;
   };
 
