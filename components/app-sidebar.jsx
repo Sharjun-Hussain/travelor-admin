@@ -239,7 +239,7 @@ const data = {
     {
       title: "Local Artists",
       icon: AlignVerticalJustifyStart,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/secondary/local-artists",
     },
     {
       title: "Shoppings",
