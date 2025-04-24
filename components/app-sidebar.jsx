@@ -244,7 +244,7 @@ const data = {
     {
       title: "Shoppings",
       icon: BugPlay,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/secondary/shoppings",
     },
     {
       title: "Licensed Tour Guides",
