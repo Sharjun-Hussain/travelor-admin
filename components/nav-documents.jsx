@@ -54,7 +54,9 @@ export function NavDocuments({ title = "Documents", items }) {
                 {item.items ? (
                   <div className="flex w-full items-center justify-between">
                     <div className="flex items-center">
-                      {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                      {item.icon && (
+                        <item.icon className="mr-2 h-4 w-4 text-j-primary" />
+                      )}
                       <span>{item.title}</span>
                     </div>
                     {expandedItems[item.title] ? (
@@ -65,8 +67,10 @@ export function NavDocuments({ title = "Documents", items }) {
                   </div>
                 ) : (
                   <Link href={item.url}>
-                    {item.icon && <item.icon className="mr-2 h-4 w-4" />}
-                    <span>{item.title}</span>
+                    {item.icon && (
+                      <item.icon className="mr-2 h-4 w-4 text-j-secondary" />
+                    )}
+                    <span className="">{item.title}</span>
                   </Link>
                 )}
               </SidebarMenuButton>
@@ -79,7 +83,7 @@ export function NavDocuments({ title = "Documents", items }) {
                   <SidebarMenuItem key={subItem.title}>
                     <SidebarMenuButton asChild>
                       <Link href={subItem.url} className="text-sm py-1">
-                        <span>{subItem.title}</span>
+                        <span className="">{subItem.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

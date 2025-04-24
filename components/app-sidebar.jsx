@@ -224,7 +224,7 @@ const data = {
     {
       title: "Activities",
       icon: Activity,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/secondary/activities",
     },
     {
       title: "Food & Beverage",

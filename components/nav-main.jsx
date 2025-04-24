@@ -20,7 +20,7 @@ export function NavMain({ items, showquickcreate = true }) {
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton
                 tooltip="Quick Create"
-                className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                className="min-w-8 bg-j-secondary/20 border font-bold border-j-secondary text-black duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
               >
                 <PlusCircleIcon />
                 <span>Quick Create</span>
@@ -30,7 +30,7 @@ export function NavMain({ items, showquickcreate = true }) {
                 className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
                 variant="outline"
               >
-                <MailIcon />
+                <MailIcon className="text-j-primary" />
                 <span className="sr-only">Inbox</span>
               </Button>
             </SidebarMenuItem>
