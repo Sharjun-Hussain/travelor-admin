@@ -234,7 +234,7 @@ const data = {
     {
       title: "Events",
       icon: SailboatIcon,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/secondary/events",
     },
     {
       title: "Local Artists",
@@ -249,7 +249,7 @@ const data = {
     {
       title: "Licensed Tour Guides",
       icon: IceCream2Icon,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/secondary/licensed-tour-guides",
     },
     {
       title: "Others",
