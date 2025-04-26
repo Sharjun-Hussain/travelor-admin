@@ -77,6 +77,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { exportToExcel } from "@/lib/utils";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -571,7 +572,11 @@ export const EntityManagement = ({
                   {customFilters}
 
                   {enableExport && (
-                    <Button variant="outline" className="border-slate-300">
+                    <Button
+                      variant="outline"
+                      className="border-slate-300"
+                      onClick={() => exportToExcel(entities, "Events")}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Export
                     </Button>
