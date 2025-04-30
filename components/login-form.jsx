@@ -28,24 +28,24 @@ export function LoginForm({ className, ...props }) {
 
   const handlesubmit = async (e) => {
     e.preventDefault();
-    router.push("/dashboard");
-    // const response = await axios.post(
-    //   `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/login`,
-    //   {
-    //     email: formData.email,
-    //     password: formData.password,
-    //   },
-    //   {
-    //     withCredentials: true,
-    //   }
-    // );
 
-    // if (response.status === 200) {
-    //   console.log("Login successful", response.data);
-    //   router.push("/dashboard");
-    // } else {
-    //   console.error("Login failed", response.data);
-    // }
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/login`,
+      {
+        email: formData.email,
+        password: formData.password,
+      },
+      {
+        withCredentials: true,
+      }
+    );
+
+    if (response.status === 200) {
+      console.log("Login successful", response.data);
+      router.push("/dashboard");
+    } else {
+      console.error("Login failed", response.data);
+    }
   };
 
   return (
