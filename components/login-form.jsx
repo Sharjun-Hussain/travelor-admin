@@ -42,6 +42,13 @@ export function LoginForm({ className, ...props }) {
 
     if (response.status === 200) {
       console.log("Login successful", response.data);
+      console.log(response.data?.accessToken);
+      // localStorage.setItem(
+      //   "accessToken",
+      //   JSON.stringify(response.data?.accessToken)
+      // );
+      localStorage.setItem("user", JSON.stringify(response.data));
+
       router.push("/dashboard");
     } else {
       console.error("Login failed", response.data);

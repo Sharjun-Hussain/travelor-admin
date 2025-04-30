@@ -176,6 +176,9 @@ const PageWrapper = () => {
     //   ...newHost,
     // };
 
+    const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+    console.log(datafromlocalstorage.data.accessToken);
+
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
       {
@@ -184,7 +187,7 @@ const PageWrapper = () => {
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJhY2NvdW50VHlwZSI6ImFkbWluIiwiaWF0IjoxNzQ1OTg3Njc1LCJleHAiOjE3NDY1OTI0NzV9.IBFrq1I8M60SDqnx24vn2RBizX1F9cYbJ9lmodus-WM`,
+          Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
         },
       }
     );

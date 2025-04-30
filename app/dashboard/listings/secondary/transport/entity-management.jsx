@@ -393,8 +393,10 @@ export const EntityManagement = ({
     newformdata.append("phone", formData.phone);
 
     if (fileInputRef.current?.files) {
+      console.log("hello");
+
       Array.from(fileInputRef.current.files).forEach((file) => {
-        newformdata.append("images", file);
+        newformdata.append("imagesfiles", file);
       });
     }
 
@@ -404,8 +406,12 @@ export const EntityManagement = ({
       });
     }
     //need to remove before production
-    for (let pair of newformdata.entries()) {
-      console.log(`${pair[0]}:`, pair[1]);
+    for (let [key, value] of newformdata.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, value.name, value.type, value.size);
+      } else {
+        console.log(`${key}:`, value);
+      }
     }
 
     if (addEntity) {
