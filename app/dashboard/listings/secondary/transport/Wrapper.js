@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import dynamic from "next/dynamic";
+import axios from "axios";
 const TransportManagement = dynamic(() => import("./transport-management"), {
   ssr: false,
 });
@@ -169,11 +170,24 @@ const PageWrapper = () => {
 
   const addFunction = async (newHost) => {
     // Simulating API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return {
-      id: Date.now(),
-      ...newHost,
-    };
+    // await new Promise((resolve) => setTimeout(resolve, 800));
+    // return {
+    //   id: Date.now(),
+    //   ...newHost,
+    // };
+
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
+      {
+        ...newHost,
+      },
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJhY2NvdW50VHlwZSI6ImFkbWluIiwiaWF0IjoxNzQ1OTQyMzI3LCJleHAiOjE3NDY1NDcxMjd9.r7tHWPb5ueXJRwSn9SrxC_h7kAUJAiBYpxI03pLaaZg`,
+        },
+      }
+    );
   };
 
   const updateFunction = async (updatedHost) => {

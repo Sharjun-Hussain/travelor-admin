@@ -538,7 +538,7 @@ const data = {
   hostbookingitems: [
     {
       title: "Booking Calendar",
-      url: "/admin/dashboard",
+      url: "/booking-calender",
       icon: LayoutDashboardIcon,
     },
   ],

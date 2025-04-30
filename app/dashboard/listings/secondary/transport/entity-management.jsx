@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -23,6 +23,8 @@ import {
   Calendar,
   Star,
   MapPin,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 import {
   Table,
@@ -107,6 +109,16 @@ const defaultRenderStatusBadge = (status) => {
   }
 };
 
+const transportTypes = [
+  { id: "1", name: "Bus" },
+  { id: "2", name: "Train" },
+  { id: "3", name: "Taxi" },
+  { id: "4", name: "Private Car" },
+  { id: "5", name: "Shuttle" },
+  { id: "6", name: "Ferry" },
+  { id: "7", name: "Airplane" },
+];
+
 export const EntityManagement = ({
   entityName = "host",
   entityPlural = "hosts",
@@ -131,7 +143,6 @@ export const EntityManagement = ({
     entityName.charAt(0).toUpperCase() + entityName.slice(1)
   }`,
   emptyState,
-
   createForm,
   editForm,
   viewDetails,
@@ -140,14 +151,14 @@ export const EntityManagement = ({
     id: "",
     title: "",
     images: [],
-    transportType: "", // Bus, Train, Taxi, etc.
+    transportTypeId: "",
     vistaVerified: false,
     operatorName: "",
-    pricePerKmUSD: "", // in USD per kilometer
+    pricePerKmUSD: "",
     amenities: [
-      { type: "Air Conditioned", available: false },
-      { type: "Passenger Capacity", value: "" },
-      { type: "Luggage Space", value: "" },
+      "Air Conditioned",
+      "Passenger Capacity : 4",
+      "Luggage Space : 4",
     ],
     reviews: {
       vistaReview: {
@@ -156,20 +167,14 @@ export const EntityManagement = ({
       },
       travelerReviews: [],
     },
-    contactDetails: {
-      phone: "",
-      email: "",
-      website: "",
-    },
+    phone: "",
+    email: "",
+    website: "",
     description: "",
-    location: {
-      departureCity: "",
-      arrivalCity: "",
-      coordinates: {
-        lat: null,
-        lng: null,
-      },
-    },
+    departureCity: "",
+    arrivalCity: "",
+    latitude: null,
+    longitude: null,
     type: "Transport",
   },
   defaultSort = { key: "name", direction: "asc" },
@@ -185,6 +190,8 @@ export const EntityManagement = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef(null);
 
   const queryClient = useQueryClient();
 
@@ -211,7 +218,9 @@ export const EntityManagement = ({
           entityName.charAt(0).toUpperCase() + entityName.slice(1)
         } added successfully`,
         {
-          description: `${newEntity.name} has been added to your ${entityName} list.`,
+          description: `${
+            newEntity.name || newEntity.title
+          } has been added to your ${entityName} list.`,
         }
       );
       setIsAddDialogOpen(false);
@@ -219,7 +228,9 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to add ${entityName}`, {
-        description: `There was an error adding the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error adding the ${entityName}. Please try again.`,
       });
     },
   });
@@ -233,13 +244,17 @@ export const EntityManagement = ({
         )
       );
       toast.success("Changes saved", {
-        description: `${updatedEntity.name}'s information has been updated.`,
+        description: `${
+          updatedEntity.name || updatedEntity.title
+        }'s information has been updated.`,
       });
       setIsEditDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Failed to update ${entityName}`, {
-        description: `There was an error updating the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error updating the ${entityName}. Please try again.`,
       });
     },
   });
@@ -260,7 +275,9 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to delete ${entityName}`, {
-        description: `There was an error deleting the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error deleting the ${entityName}. Please try again.`,
       });
     },
   });
@@ -270,6 +287,7 @@ export const EntityManagement = ({
     const matchesSearch =
       entity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entity.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (entity.country &&
         entity.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (entity.city &&
@@ -290,6 +308,10 @@ export const EntityManagement = ({
   const sortedEntities = [...filteredEntities].sort((a, b) => {
     let aValue = a[sortConfig.key];
     let bValue = b[sortConfig.key];
+
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) aValue = "";
+    if (bValue === undefined || bValue === null) bValue = "";
 
     // Handle string comparison
     if (typeof aValue === "string" && typeof bValue === "string") {
@@ -337,6 +359,7 @@ export const EntityManagement = ({
         let temp = newData;
 
         for (let i = 0; i < keys.length - 1; i++) {
+          if (!temp[keys[i]]) temp[keys[i]] = {};
           temp[keys[i]] = { ...temp[keys[i]] };
           temp = temp[keys[i]];
         }
@@ -391,6 +414,57 @@ export const EntityManagement = ({
   const openDeleteDialog = (entity) => {
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploadingImages(true);
+
+    try {
+      // In a real app, you would upload files to your server here
+      // This is just a mock implementation
+      const uploadedUrls = await Promise.all(
+        files.map((file) => {
+          return new Promise((resolve) => {
+            // Simulate upload delay
+            setTimeout(() => {
+              const url = URL.createObjectURL(file);
+              resolve(url);
+            }, 1000);
+          });
+        })
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+      toast.success("Images uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload images", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setUploadingImages(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const removeImage = (index) => {
+    setFormData((prev) => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
+    });
+  };
+
+  const getTransportTypeName = (id) => {
+    return transportTypes.find((type) => type.id === id)?.name || "Unknown";
   };
 
   if (isLoading) {
@@ -629,7 +703,7 @@ export const EntityManagement = ({
                               >
                                 {column.render
                                   ? column.render(entity)
-                                  : entity[column.key]}
+                                  : entity[column.key] || "-"}
                               </TableCell>
                             ))}
                             <TableCell className="text-right">
@@ -784,7 +858,7 @@ export const EntityManagement = ({
                                     >
                                       {column.render
                                         ? column.render(entity)
-                                        : entity[column.key]}
+                                        : entity[column.key] || "-"}
                                     </TableCell>
                                   ))}
                                   <TableCell className="text-right">
@@ -912,7 +986,7 @@ export const EntityManagement = ({
                                     >
                                       {column.render
                                         ? column.render(entity)
-                                        : entity[column.key]}
+                                        : entity[column.key] || "-"}
                                     </TableCell>
                                   ))}
                                   <TableCell className="text-right">
@@ -1040,7 +1114,7 @@ export const EntityManagement = ({
                                     >
                                       {column.render
                                         ? column.render(entity)
-                                        : entity[column.key]}
+                                        : entity[column.key] || "-"}
                                     </TableCell>
                                   ))}
                                   <TableCell className="text-right">
@@ -1153,15 +1227,18 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="transportType" className="text-slate-700">
+                      <Label
+                        htmlFor="transportTypeId"
+                        className="text-slate-700"
+                      >
                         Transport Type*
                       </Label>
                       <Select
-                        value={formData.transportType}
+                        value={formData.transportTypeId}
                         onValueChange={(value) =>
                           setFormData({
                             ...formData,
-                            transportType: value,
+                            transportTypeId: value,
                           })
                         }
                         required
@@ -1170,15 +1247,11 @@ export const EntityManagement = ({
                           <SelectValue placeholder="Select transport type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Bus">Bus</SelectItem>
-                          <SelectItem value="Train">Train</SelectItem>
-                          <SelectItem value="Taxi">Taxi</SelectItem>
-                          <SelectItem value="Private Car">
-                            Private Car
-                          </SelectItem>
-                          <SelectItem value="Shuttle">Shuttle</SelectItem>
-                          <SelectItem value="Ferry">Ferry</SelectItem>
-                          <SelectItem value="Airplane">Airplane</SelectItem>
+                          {transportTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1218,23 +1291,52 @@ export const EntityManagement = ({
 
                     <div className="grid gap-2">
                       <Label htmlFor="images" className="text-slate-700">
-                        Image URLs (comma separated)
+                        Images
                       </Label>
-                      <Input
-                        id="images"
-                        name="images"
-                        placeholder="Enter image URLs separated by commas"
-                        value={formData.images.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            images: e.target.value
-                              .split(",")
-                              .map((url) => url.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          {formData.images.map((image, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={image}
+                                alt={`Transport ${index}`}
+                                className="h-20 w-20 object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                              >
+                                <X className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <input
+                          type="file"
+                          id="images"
+                          ref={fileInputRef}
+                          onChange={handleImageUpload}
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImages}
+                        >
+                          {uploadingImages ? (
+                            "Uploading..."
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload Images
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -1246,9 +1348,9 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="departureCity"
-                        name="location.departureCity"
+                        name="departureCity"
                         placeholder="Enter departure city"
-                        value={formData.location?.departureCity || ""}
+                        value={formData.departureCity || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1261,9 +1363,9 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="arrivalCity"
-                        name="location.arrivalCity"
+                        name="arrivalCity"
                         placeholder="Enter arrival city"
-                        value={formData.location?.arrivalCity || ""}
+                        value={formData.arrivalCity || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1311,7 +1413,7 @@ export const EntityManagement = ({
                 </div>
 
                 {/* Amenities Section */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
+                {/* <div className="border-t border-slate-200 pt-4 mt-4">
                   <h3 className="text-lg font-medium text-slate-800 mb-4">
                     Amenities
                   </h3>
@@ -1320,12 +1422,12 @@ export const EntityManagement = ({
                       <Checkbox
                         id="airConditioned"
                         checked={
-                          formData.amenities.find(
+                          formData.amenities?.find(
                             (a) => a.type === "Air Conditioned"
                           )?.available || false
                         }
                         onCheckedChange={(checked) => {
-                          const amenities = [...formData.amenities];
+                          const amenities = [...(formData.amenities || [])];
                           const index = amenities.findIndex(
                             (a) => a.type === "Air Conditioned"
                           );
@@ -1356,12 +1458,12 @@ export const EntityManagement = ({
                         min="1"
                         placeholder="Enter capacity"
                         value={
-                          formData.amenities.find(
+                          formData.amenities?.find(
                             (a) => a.type === "Passenger Capacity"
                           )?.value || ""
                         }
                         onChange={(e) => {
-                          const amenities = [...formData.amenities];
+                          const amenities = [...(formData.amenities || [])];
                           const index = amenities.findIndex(
                             (a) => a.type === "Passenger Capacity"
                           );
@@ -1389,12 +1491,12 @@ export const EntityManagement = ({
                         min="0"
                         placeholder="Enter luggage capacity"
                         value={
-                          formData.amenities.find(
+                          formData.amenities?.find(
                             (a) => a.type === "Luggage Space"
                           )?.value || ""
                         }
                         onChange={(e) => {
-                          const amenities = [...formData.amenities];
+                          const amenities = [...(formData.amenities || [])];
                           const index = amenities.findIndex(
                             (a) => a.type === "Luggage Space"
                           );
@@ -1412,7 +1514,7 @@ export const EntityManagement = ({
                       />
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Contact Details Section */}
                 <div className="border-t border-slate-200 pt-4 mt-4">
@@ -1426,9 +1528,9 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="contactPhone"
-                        name="contactDetails.phone"
+                        name="phone"
                         placeholder="Enter phone number"
-                        value={formData.contactDetails?.phone || ""}
+                        value={formData.phone || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -1440,10 +1542,10 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="contactEmail"
-                        name="contactDetails.email"
+                        name="email"
                         type="email"
                         placeholder="Enter email"
-                        value={formData.contactDetails?.email || ""}
+                        value={formData.email || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -1458,10 +1560,10 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="contactWebsite"
-                        name="contactDetails.website"
+                        name="website"
                         type="url"
                         placeholder="Enter website URL"
-                        value={formData.contactDetails?.website || ""}
+                        value={formData.website || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -1481,11 +1583,11 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="latitude"
-                        name="location.coordinates.lat"
+                        name="latitude"
                         type="number"
                         step="any"
                         placeholder="Enter latitude"
-                        value={formData.location?.coordinates?.lat || ""}
+                        value={formData.latitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -1497,11 +1599,11 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="longitude"
-                        name="location.coordinates.lng"
+                        name="longitude"
                         type="number"
                         step="any"
                         placeholder="Enter longitude"
-                        value={formData.location?.coordinates?.lng || ""}
+                        value={formData.longitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -1519,7 +1621,7 @@ export const EntityManagement = ({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={addMutation.isPending}
+                    disabled={addMutation.isPending || uploadingImages}
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                   >
                     {addMutation.isPending ? "Adding..." : "Add Transport"}
@@ -1571,17 +1673,17 @@ export const EntityManagement = ({
 
                     <div className="grid gap-2">
                       <Label
-                        htmlFor="edit-transportType"
+                        htmlFor="edit-transportTypeId"
                         className="text-slate-700"
                       >
                         Transport Type*
                       </Label>
                       <Select
-                        value={formData.transportType}
+                        value={formData.transportTypeId}
                         onValueChange={(value) =>
                           setFormData({
                             ...formData,
-                            transportType: value,
+                            transportTypeId: value,
                           })
                         }
                         required
@@ -1590,15 +1692,11 @@ export const EntityManagement = ({
                           <SelectValue placeholder="Select transport type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Bus">Bus</SelectItem>
-                          <SelectItem value="Train">Train</SelectItem>
-                          <SelectItem value="Taxi">Taxi</SelectItem>
-                          <SelectItem value="Private Car">
-                            Private Car
-                          </SelectItem>
-                          <SelectItem value="Shuttle">Shuttle</SelectItem>
-                          <SelectItem value="Ferry">Ferry</SelectItem>
-                          <SelectItem value="Airplane">Airplane</SelectItem>
+                          {transportTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1644,23 +1742,52 @@ export const EntityManagement = ({
 
                     <div className="grid gap-2">
                       <Label htmlFor="edit-images" className="text-slate-700">
-                        Image URLs (comma separated)
+                        Images
                       </Label>
-                      <Input
-                        id="edit-images"
-                        name="images"
-                        placeholder="Enter image URLs separated by commas"
-                        value={formData.images.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            images: e.target.value
-                              .split(",")
-                              .map((url) => url.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          {formData.images?.map((image, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={image}
+                                alt={`Transport ${index}`}
+                                className="h-20 w-20 object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                              >
+                                <X className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <input
+                          type="file"
+                          id="edit-images"
+                          ref={fileInputRef}
+                          onChange={handleImageUpload}
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImages}
+                        >
+                          {uploadingImages ? (
+                            "Uploading..."
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload Images
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -1758,12 +1885,12 @@ export const EntityManagement = ({
                       <Checkbox
                         id="edit-airConditioned"
                         checked={
-                          formData.amenities.find(
+                          formData.amenities?.find(
                             (a) => a.type === "Air Conditioned"
                           )?.available || false
                         }
                         onCheckedChange={(checked) => {
-                          const amenities = [...formData.amenities];
+                          const amenities = [...(formData.amenities || [])];
                           const index = amenities.findIndex(
                             (a) => a.type === "Air Conditioned"
                           );
@@ -1796,12 +1923,12 @@ export const EntityManagement = ({
                         min="1"
                         placeholder="Enter capacity"
                         value={
-                          formData.amenities.find(
+                          formData.amenities?.find(
                             (a) => a.type === "Passenger Capacity"
                           )?.value || ""
                         }
                         onChange={(e) => {
-                          const amenities = [...formData.amenities];
+                          const amenities = [...(formData.amenities || [])];
                           const index = amenities.findIndex(
                             (a) => a.type === "Passenger Capacity"
                           );
@@ -1832,12 +1959,12 @@ export const EntityManagement = ({
                         min="0"
                         placeholder="Enter luggage capacity"
                         value={
-                          formData.amenities.find(
+                          formData.amenities?.find(
                             (a) => a.type === "Luggage Space"
                           )?.value || ""
                         }
                         onChange={(e) => {
-                          const amenities = [...formData.amenities];
+                          const amenities = [...(formData.amenities || [])];
                           const index = amenities.findIndex(
                             (a) => a.type === "Luggage Space"
                           );
@@ -1971,7 +2098,7 @@ export const EntityManagement = ({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={updateMutation.isPending}
+                    disabled={updateMutation.isPending || uploadingImages}
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                   >
                     {updateMutation.isPending ? "Updating..." : "Save Changes"}
@@ -1992,24 +2119,26 @@ export const EntityManagement = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column - Transport Identity */}
               <div className="flex flex-col items-center p-4 border rounded-lg border-slate-200 bg-slate-50">
-                <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage
-                    src={currentEntity.images?.[0]}
-                    alt={currentEntity.title}
-                  />
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl">
-                    {currentEntity.title
-                      ?.split(" ")
-                      .map((word) => word[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
+                {currentEntity.images?.[0] ? (
+                  <div className="relative w-full h-48 mb-4">
+                    <img
+                      src={currentEntity.images[0]}
+                      alt={currentEntity.title}
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-48 w-full bg-slate-100 rounded-md flex items-center justify-center mb-4">
+                    <ImageIcon className="h-12 w-12 text-slate-400" />
+                  </div>
+                )}
+
                 <h3 className="text-2xl font-bold text-slate-800">
-                  {currentEntity.title}
+                  {currentEntity.title || "No Title"}
                 </h3>
                 <p className="text-slate-500 mb-4">
-                  {currentEntity.transportType}
+                  {getTransportTypeName(currentEntity.transportTypeId) ||
+                    "No Type"}
                 </p>
 
                 <div className="w-full mt-2">
@@ -2050,7 +2179,7 @@ export const EntityManagement = ({
                     Operator Information
                   </h4>
                   <p className="text-slate-600 mb-4">
-                    {currentEntity.operatorName}
+                    {currentEntity.operatorName || "Not specified"}
                   </p>
 
                   <h4 className="text-sm font-medium text-slate-700 mb-2">
@@ -2059,8 +2188,8 @@ export const EntityManagement = ({
                   <div className="flex items-center space-x-2 mb-4">
                     <MapPin className="h-4 w-4 text-slate-400" />
                     <span className="text-slate-600">
-                      {currentEntity.location?.departureCity} →{" "}
-                      {currentEntity.location?.arrivalCity}
+                      {currentEntity.location?.departureCity || "Unknown"} →{" "}
+                      {currentEntity.location?.arrivalCity || "Unknown"}
                     </span>
                   </div>
 
@@ -2068,7 +2197,9 @@ export const EntityManagement = ({
                     Price per Kilometer
                   </h4>
                   <p className="text-slate-600">
-                    ${currentEntity.pricePerKmUSD} USD/km
+                    {currentEntity.pricePerKmUSD
+                      ? `$${currentEntity.pricePerKmUSD} USD/km`
+                      : "Not specified"}
                   </p>
                 </div>
 
@@ -2076,8 +2207,29 @@ export const EntityManagement = ({
                   <h4 className="text-sm font-medium text-slate-700 mb-2">
                     Description
                   </h4>
-                  <p className="text-slate-600">{currentEntity.description}</p>
+                  <p className="text-slate-600">
+                    {currentEntity.description || "No description available"}
+                  </p>
                 </div>
+
+                {/* Additional Images */}
+                {currentEntity.images?.length > 1 && (
+                  <div className="p-4 border rounded-lg border-slate-200">
+                    <h4 className="text-sm font-medium text-slate-700 mb-2">
+                      Additional Images
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {currentEntity.images.slice(1).map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`Transport ${index + 1}`}
+                          className="h-20 w-20 object-cover rounded-md"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2122,7 +2274,7 @@ export const EntityManagement = ({
                   <p className="mt-1 text-sm text-red-700">
                     Deleting{" "}
                     <span className="font-semibold">
-                      {currentEntity?.title}
+                      {currentEntity?.title || "this transport"}
                     </span>{" "}
                     will remove all its data from your platform.
                   </p>
