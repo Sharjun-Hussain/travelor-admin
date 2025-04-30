@@ -376,8 +376,40 @@ export const EntityManagement = ({
 
   const handleAddEntity = (e) => {
     e.preventDefault();
+
+    const newformdata = new FormData();
+    newformdata.append("title", formData.title);
+    newformdata.append("transportTypeId", formData.transportTypeId);
+    newformdata.append("arrivalCity", formData.arrivalCity);
+    newformdata.append("departureCity", formData.departureCity);
+    newformdata.append("description", formData.description);
+    newformdata.append("email", formData.email);
+    newformdata.append("latitude", formData.latitude);
+    newformdata.append("longitude", formData.longitude);
+    newformdata.append("operatorName", formData.operatorName);
+    newformdata.append("pricePerKmUSD", formData.pricePerKmUSD);
+    newformdata.append("vistaVerified", formData.vistaVerified);
+    newformdata.append("website", formData.website);
+    newformdata.append("phone", formData.phone);
+
+    if (fileInputRef.current?.files) {
+      Array.from(fileInputRef.current.files).forEach((file) => {
+        newformdata.append("images", file);
+      });
+    }
+
+    if (formData.amenities?.length > 0) {
+      formData.amenities.forEach((amenity) => {
+        newformdata.append("amenities", amenity);
+      });
+    }
+    //need to remove before production
+    for (let pair of newformdata.entries()) {
+      console.log(`${pair[0]}:`, pair[1]);
+    }
+
     if (addEntity) {
-      addMutation.mutate(formData);
+      addMutation.mutate(newformdata);
     }
   };
 
@@ -423,8 +455,6 @@ export const EntityManagement = ({
     setUploadingImages(true);
 
     try {
-      // In a real app, you would upload files to your server here
-      // This is just a mock implementation
       const uploadedUrls = await Promise.all(
         files.map((file) => {
           return new Promise((resolve) => {

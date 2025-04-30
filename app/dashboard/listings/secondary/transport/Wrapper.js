@@ -184,7 +184,7 @@ const PageWrapper = () => {
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJhY2NvdW50VHlwZSI6ImFkbWluIiwiaWF0IjoxNzQ1OTQyMzI3LCJleHAiOjE3NDY1NDcxMjd9.r7tHWPb5ueXJRwSn9SrxC_h7kAUJAiBYpxI03pLaaZg`,
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJhY2NvdW50VHlwZSI6ImFkbWluIiwiaWF0IjoxNzQ1OTg3Njc1LCJleHAiOjE3NDY1OTI0NzV9.IBFrq1I8M60SDqnx24vn2RBizX1F9cYbJ9lmodus-WM`,
         },
       }
     );
