@@ -417,7 +417,7 @@ export const EntityManagement = ({
       console.log("hello");
 
       Array.from(fileInputRef.current.files).forEach((file) => {
-        newformdata.append("imagesfiles", file);
+        newformdata.append("images", file);
       });
     }
 
