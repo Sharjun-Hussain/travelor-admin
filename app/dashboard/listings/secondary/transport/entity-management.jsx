@@ -521,7 +521,7 @@ export const EntityManagement = ({
         ...prev,
         images: [...prev.images, ...uploadedUrls],
       }));
-      toast.success("Images uploaded successfully");
+      // toast.success("Images uploaded successfully");
     } catch (error) {
       toast.error("Failed to upload images", {
         description: error.message || "Please try again",

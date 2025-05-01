@@ -1,12 +1,14 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 const TransportManagement = dynamic(() => import("./transport-management"), {
   ssr: false,
 });
-const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
-console.log(datafromlocalstorage.data.accessToken);
+useEffect(() => {
+  const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+  console.log(datafromlocalstorage.data.accessToken);
+}, []);
 
 const PageWrapper = () => {
   // Mock API functions
