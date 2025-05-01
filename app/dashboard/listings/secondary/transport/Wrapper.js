@@ -181,9 +181,9 @@ const PageWrapper = () => {
 
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
-      {
-        ...newHost,
-      },
+
+      newHost,
+
       {
         headers: {
           Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
