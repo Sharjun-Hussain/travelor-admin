@@ -55,8 +55,11 @@ export function LoginForm({ className, ...props }) {
         toast.error("Unexpected Error. Try again.");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Something went wrong. Please try again.");
+      console.log(
+        "Login error:",
+        error.response.data.message || error.response.data?.errors[0]?.msg
+      );
+      toast.error(`${error.response.data?.message || "Login Failed"}`);
     } finally {
       setLoading(false); // ✅ Always resets the button
     }
