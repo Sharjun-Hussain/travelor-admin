@@ -186,7 +186,6 @@ const PageWrapper = () => {
       },
       {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
         },
       }
