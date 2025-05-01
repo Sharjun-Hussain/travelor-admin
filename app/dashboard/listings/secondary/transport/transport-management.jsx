@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { EntityManagement } from "@/app/dashboard/listings/secondary/transport/entity-management";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 
 const defaultColumns = [
   {
@@ -49,7 +50,12 @@ const defaultColumns = [
     visible: true,
     sortable: true,
     render: (transport) => (
-      <div className="text-slate-700">{transport.operatorName}</div>
+      <div
+        title={transport.operatorName}
+        className="text-slate-700 truncate max-w-[150px]  "
+      >
+        {transport.operatorName}
+      </div>
     ),
   },
   // {
@@ -135,12 +141,14 @@ const defaultColumns = [
     sortable: false,
     render: (transport) => (
       <div
-        title={`${transport.contactDetails.phone} - ${transport.contactDetails.email} `}
+        title={`${transport.phone} - ${transport.email} `}
         className="text-sm text-slate-600 truncate max-w-[100px]"
       >
-        {transport.contactDetails?.phone || "No phone"}
+        {transport?.phone || "No phone"}
         <br />
-        {transport.contactDetails?.email || "No email"}
+        {transport?.email || "No email"}
+        <br />
+        {transport?.website ? <Link> {transport?.website}</Link> : "No Website"}
       </div>
     ),
   },
