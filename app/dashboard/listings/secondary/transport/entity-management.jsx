@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -76,6 +76,8 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { exportToExcel } from "@/lib/utils";
+import axios from "axios";
+import { MultiSelect } from "@/components/multi-select";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -155,11 +157,7 @@ export const EntityManagement = ({
     vistaVerified: false,
     operatorName: "",
     pricePerKmUSD: "",
-    amenities: [
-      "Air Conditioned",
-      "Passenger Capacity : 4",
-      "Luggage Space : 4",
-    ],
+    amenities: [],
     reviews: {
       vistaReview: {
         rating: null,
@@ -192,6 +190,29 @@ export const EntityManagement = ({
   const [formData, setFormData] = useState(initialFormData);
   const [uploadingImages, setUploadingImages] = useState(false);
   const fileInputRef = useRef(null);
+
+  const [FetchedAmenities, setFetchedAmenities] = useState([]);
+
+  const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+  console.log(datafromlocalstorage.data.accessToken);
+
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/amenities`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
+          },
+        }
+      );
+
+      setFetchedAmenities(response.data.data);
+    };
+
+    fetchAmenities();
+  }, []);
 
   const queryClient = useQueryClient();
 
@@ -1304,6 +1325,19 @@ export const EntityManagement = ({
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label
+                        htmlFor="transportTypeId"
+                        className="text-slate-700"
+                      >
+                        Amenities
+                      </Label>
+                      <MultiSelect
+                        options={FetchedAmenities}
+                        onValueChange={(item) => formData.amenities.push(item)}
                       />
                     </div>
 
