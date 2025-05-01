@@ -13,9 +13,12 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Circle } from "lucide-react";
 
 export function LoginForm({ className, ...props }) {
   const router = useRouter();
+  const [Loading, setLoading] = useState(false);
   const [formData, setformData] = useState({
     email: "",
     password: "",
@@ -28,30 +31,34 @@ export function LoginForm({ className, ...props }) {
 
   const handlesubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/login`,
-      {
-        email: formData.email,
-        password: formData.password,
-      },
-      {
-        withCredentials: true,
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/login`,
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.status === 200) {
+        toast.success("Login Successful");
+        localStorage.setItem("user", JSON.stringify(response.data));
+        router.push("/dashboard");
+      } else if (response.status === 401 || response.status === 400) {
+        toast.error("Login Failed");
+      } else if (response.status === 500) {
+        toast.error("Server Error. Please contact the network admin.");
+      } else {
+        toast.error("Unexpected Error. Try again.");
       }
-    );
-
-    if (response.status === 200) {
-      console.log("Login successful", response.data);
-      console.log(response.data?.accessToken);
-      // localStorage.setItem(
-      //   "accessToken",
-      //   JSON.stringify(response.data?.accessToken)
-      // );
-      localStorage.setItem("user", JSON.stringify(response.data));
-
-      router.push("/dashboard");
-    } else {
-      console.error("Login failed", response.data);
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false); // ✅ Always resets the button
     }
   };
 
@@ -98,8 +105,16 @@ export function LoginForm({ className, ...props }) {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button disabled={Loading} type="submit" className="w-full h-12">
+                {Loading ? (
+                  <span className="flex gap-2 items-center">
+                    {" "}
+                    <Circle size={27} className="animate-spin " />
+                    Signin in..
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </Button>
               <Button type="submit" variant="outline" className="w-full">
                 Login with Google

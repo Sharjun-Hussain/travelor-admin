@@ -39,7 +39,9 @@ const defaultColumns = [
           >
             {transport.title}
           </p>
-          <p className="text-sm text-slate-500">{transport.transportType}</p>
+          <p className="text-sm text-slate-500">
+            {transport.transportType?.name || "-"}
+          </p>
         </div>
       </div>
     ),
@@ -52,27 +54,12 @@ const defaultColumns = [
     render: (transport) => (
       <div
         title={transport.operatorName}
-        className="text-slate-700 truncate max-w-[150px]  "
+        className="text-slate-700 truncate max-w-[150px]"
       >
         {transport.operatorName}
       </div>
     ),
   },
-  // {
-  //   key: "route",
-  //   label: "Route",
-  //   visible: true,
-  //   sortable: true,
-  //   render: (transport) => (
-  //     <div className="flex items-center">
-  //       <MapPin className="h-3 w-3 text-slate-400 mr-1" />
-  //       <span>
-  //         {transport.location?.departureCity} →{" "}
-  //         {transport.location?.arrivalCity}
-  //       </span>
-  //     </div>
-  //   ),
-  // },
   {
     key: "pricePerKmUSD",
     label: "Price/km",
@@ -109,31 +96,6 @@ const defaultColumns = [
       );
     },
   },
-  // {
-  //   key: "amenities",
-  //   label: "Amenities",
-  //   visible: true,
-  //   sortable: false,
-  //   render: (transport) => (
-  //     <div className="text-sm text-slate-600">
-  //       {transport.amenities?.find((a) => a.type === "Air Conditioned")
-  //         ?.available
-  //         ? "AC"
-  //         : "No AC"}
-  //       {transport.amenities?.find((a) => a.type === "Passenger Capacity")
-  //         ?.value && (
-  //         <>
-  //           ,{" "}
-  //           {
-  //             transport.amenities.find((a) => a.type === "Passenger Capacity")
-  //               .value
-  //           }{" "}
-  //           seats
-  //         </>
-  //       )}
-  //     </div>
-  //   ),
-  // },
   {
     key: "contactDetails",
     label: "Contact",
@@ -141,7 +103,7 @@ const defaultColumns = [
     sortable: false,
     render: (transport) => (
       <div
-        title={`${transport.phone} - ${transport.email} `}
+        title={`${transport.phone} - ${transport.email}`}
         className="text-sm text-slate-600 truncate max-w-[100px]"
       >
         {transport?.phone || "No phone"}

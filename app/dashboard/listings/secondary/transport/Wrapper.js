@@ -183,7 +183,7 @@ const PageWrapper = () => {
     // ];
   };
 
-  const addFunction = async (newHost) => {
+  const addFunction = async (newEntity) => {
     // Simulating API call
     // await new Promise((resolve) => setTimeout(resolve, 800));
     // return {
@@ -194,7 +194,7 @@ const PageWrapper = () => {
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
 
-      newHost,
+      newEntity,
 
       {
         headers: {
@@ -202,12 +202,23 @@ const PageWrapper = () => {
         },
       }
     );
+    return response.data.data;
   };
 
-  const updateFunction = async (updatedHost) => {
+  const updateFunction = async (updatedEntity) => {
     // Simulating API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return updatedHost;
+    const response = await axios.put(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
+
+      updatedEntity,
+
+      {
+        headers: {
+          Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
+        },
+      }
+    );
+    return updatedEntity;
   };
 
   const deletFucntion = async (id) => {

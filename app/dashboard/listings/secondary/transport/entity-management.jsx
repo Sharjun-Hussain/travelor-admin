@@ -173,6 +173,13 @@ export const EntityManagement = ({
     arrivalCity: "",
     latitude: null,
     longitude: null,
+    seatCount: null,
+    transportType: {
+      id: null,
+      language_code: "",
+      name: "",
+      isActive: null,
+    },
     type: "Transport",
   },
   defaultSort = { key: "name", direction: "asc" },
@@ -192,6 +199,7 @@ export const EntityManagement = ({
   const fileInputRef = useRef(null);
 
   const [FetchedAmenities, setFetchedAmenities] = useState([]);
+  const [FetchedTransportTypes, setFetchedTransportTypes] = useState([]);
 
   const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
   console.log(datafromlocalstorage.data.accessToken);
@@ -211,7 +219,22 @@ export const EntityManagement = ({
       setFetchedAmenities(response.data.data);
     };
 
+    const fetchTravelTypes = async () => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-types`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
+          },
+        }
+      );
+
+      setFetchedTransportTypes(response.data.data);
+    };
+
     fetchAmenities();
+    fetchTravelTypes();
   }, []);
 
   const queryClient = useQueryClient();
@@ -760,6 +783,8 @@ export const EntityManagement = ({
                               >
                                 {column.render
                                   ? column.render(entity)
+                                  : typeof entity[column.key] === "object"
+                                  ? JSON.stringify(entity[column.key]) // Fallback for objects
                                   : entity[column.key] || "-"}
                               </TableCell>
                             ))}
@@ -1874,7 +1899,7 @@ export const EntityManagement = ({
                         id="edit-departureCity"
                         name="location.departureCity"
                         placeholder="Enter departure city"
-                        value={formData.location?.departureCity || ""}
+                        value={formData?.departureCity || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1892,7 +1917,7 @@ export const EntityManagement = ({
                         id="edit-arrivalCity"
                         name="location.arrivalCity"
                         placeholder="Enter arrival city"
-                        value={formData.location?.arrivalCity || ""}
+                        value={formData?.arrivalCity || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -2071,7 +2096,7 @@ export const EntityManagement = ({
                         id="edit-contactPhone"
                         name="contactDetails.phone"
                         placeholder="Enter phone number"
-                        value={formData.contactDetails?.phone || ""}
+                        value={formData?.phone || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2089,7 +2114,7 @@ export const EntityManagement = ({
                         name="contactDetails.email"
                         type="email"
                         placeholder="Enter email"
-                        value={formData.contactDetails?.email || ""}
+                        value={formData?.email || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2107,7 +2132,7 @@ export const EntityManagement = ({
                         name="contactDetails.website"
                         type="url"
                         placeholder="Enter website URL"
-                        value={formData.contactDetails?.website || ""}
+                        value={formData?.website || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2131,7 +2156,7 @@ export const EntityManagement = ({
                         type="number"
                         step="any"
                         placeholder="Enter latitude"
-                        value={formData.location?.coordinates?.lat || ""}
+                        value={formData?.latitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2150,7 +2175,7 @@ export const EntityManagement = ({
                         type="number"
                         step="any"
                         placeholder="Enter longitude"
-                        value={formData.location?.coordinates?.lng || ""}
+                        value={formData?.longitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2258,8 +2283,8 @@ export const EntityManagement = ({
                   <div className="flex items-center space-x-2 mb-4">
                     <MapPin className="h-4 w-4 text-slate-400" />
                     <span className="text-slate-600">
-                      {currentEntity.location?.departureCity || "Unknown"} →{" "}
-                      {currentEntity.location?.arrivalCity || "Unknown"}
+                      {currentEntity?.departureCity || "Unknown"} →{" "}
+                      {currentEntity?.arrivalCity || "Unknown"}
                     </span>
                   </div>
 
