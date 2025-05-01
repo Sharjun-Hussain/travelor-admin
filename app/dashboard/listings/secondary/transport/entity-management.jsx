@@ -111,15 +111,15 @@ const defaultRenderStatusBadge = (status) => {
   }
 };
 
-const transportTypes = [
-  { id: "1", name: "Bus" },
-  { id: "2", name: "Train" },
-  { id: "3", name: "Taxi" },
-  { id: "4", name: "Private Car" },
-  { id: "5", name: "Shuttle" },
-  { id: "6", name: "Ferry" },
-  { id: "7", name: "Airplane" },
-];
+// const transportTypes = [
+//   { id: "1", name: "Bus" },
+//   { id: "2", name: "Train" },
+//   { id: "3", name: "Taxi" },
+//   { id: "4", name: "Private Car" },
+//   { id: "5", name: "Shuttle" },
+//   { id: "6", name: "Ferry" },
+//   { id: "7", name: "Airplane" },
+// ];
 
 export const EntityManagement = ({
   entityName = "host",
@@ -544,7 +544,9 @@ export const EntityManagement = ({
   };
 
   const getTransportTypeName = (id) => {
-    return transportTypes.find((type) => type.id === id)?.name || "Unknown";
+    return (
+      FetchedTransportTypes.find((type) => type.id === id)?.name || "Unknown"
+    );
   };
 
   if (isLoading) {
@@ -1308,7 +1310,7 @@ export const EntityManagement = ({
                       />
                     </div>
 
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 ">
                       <Label
                         htmlFor="transportTypeId"
                         className="text-slate-700"
@@ -1325,11 +1327,11 @@ export const EntityManagement = ({
                         }
                         required
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select transport type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {transportTypes.map((type) => (
+                          {FetchedTransportTypes.map((type) => (
                             <SelectItem key={type.id} value={type.id}>
                               {type.name}
                             </SelectItem>
@@ -1467,7 +1469,7 @@ export const EntityManagement = ({
                       />
                     </div>
 
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 ">
                       <Label htmlFor="vistaVerified" className="text-slate-700">
                         Vista Verified
                       </Label>
@@ -1480,7 +1482,7 @@ export const EntityManagement = ({
                           })
                         }
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select verification status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1766,7 +1768,7 @@ export const EntityManagement = ({
                       />
                     </div>
 
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 w-full">
                       <Label
                         htmlFor="edit-transportTypeId"
                         className="text-slate-700"
@@ -1783,11 +1785,11 @@ export const EntityManagement = ({
                         }
                         required
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select transport type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {transportTypes.map((type) => (
+                          {FetchedTransportTypes.map((type) => (
                             <SelectItem key={type.id} value={type.id}>
                               {type.name}
                             </SelectItem>
