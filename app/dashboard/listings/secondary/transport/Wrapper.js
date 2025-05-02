@@ -5,20 +5,16 @@ import axios from "axios";
 const TransportManagement = dynamic(() => import("./transport-management"), {
   ssr: false,
 });
-useEffect(() => {
-  const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
-  console.log(datafromlocalstorage.data.accessToken);
-}, []);
 
 const PageWrapper = () => {
-  // Mock API functions
-  const fetchFunction = async () => {
-    // Simulating API call delay
-    // await new Promise((resolve) => setTimeout(resolve, 500));
+  // useEffect(() => {
+  const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+  console.log(datafromlocalstorage.data.accessToken);
+  // }, []);
 
+  const fetchFunction = async () => {
     const response = await axios.get(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
-
       {
         headers: {
           Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,

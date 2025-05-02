@@ -78,6 +78,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { exportToExcel } from "@/lib/utils";
 import axios from "axios";
 import { MultiSelect } from "@/components/multi-select";
+import { uploadImagesToS3 } from "@/lib/s3BucketUploader";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -173,6 +174,7 @@ export const EntityManagement = ({
     arrivalCity: "",
     latitude: null,
     longitude: null,
+    onlineImages: [],
     seatCount: null,
     transportType: {
       id: null,
@@ -436,11 +438,18 @@ export const EntityManagement = ({
     newformdata.append("website", formData.website);
     newformdata.append("phone", formData.phone);
 
-    if (fileInputRef.current?.files) {
-      console.log("hello");
+    // if (fileInputRef.current?.files) {
+    //   console.log("hello");
 
-      Array.from(fileInputRef.current.files).forEach((file) => {
-        newformdata.append("images", file);
+    //   Array.from(fileInputRef.current.files).forEach((file) => {
+    //     newformdata.append("images", file);
+    //   });
+    // }
+
+    // Append image URLs from s3uploadedfiles if they exist
+    if (formData.onlineImages?.length > 0) {
+      formData.onlineImages.forEach((url) => {
+        newformdata.append("images", url);
       });
     }
 
@@ -503,6 +512,17 @@ export const EntityManagement = ({
     if (files.length === 0) return;
 
     setUploadingImages(true);
+
+    try {
+      const s3uploadedfiles = await uploadImagesToS3(files);
+
+      setFormData((prev) => ({
+        ...prev,
+        onlineImages: [...(prev.onlineImages || []), ...s3uploadedfiles],
+      }));
+    } catch (e) {
+      console.log(e);
+    }
 
     try {
       const uploadedUrls = await Promise.all(
@@ -1318,21 +1338,29 @@ export const EntityManagement = ({
                         Transport Type*
                       </Label>
                       <Select
-                        value={formData.transportTypeId}
-                        onValueChange={(value) =>
+                        value={formData.transportTypeId?.toString() || ""}
+                        onValueChange={(value) => {
                           setFormData({
                             ...formData,
-                            transportTypeId: value,
-                          })
-                        }
+                            transportTypeId: Number(value), // storing the ID
+                          });
+                        }}
                         required
                       >
                         <SelectTrigger className="border-slate-300 w-full">
-                          <SelectValue placeholder="Select transport type" />
+                          <SelectValue placeholder="Select transport type">
+                            {FetchedTransportTypes.find(
+                              (item) => item.id === formData.transportTypeId
+                            )?.name || "Select transport type"}
+                          </SelectValue>
                         </SelectTrigger>
+
                         <SelectContent>
                           {FetchedTransportTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id}>
+                            <SelectItem
+                              key={type.id}
+                              value={type.id.toString()}
+                            >
                               {type.name}
                             </SelectItem>
                           ))}
