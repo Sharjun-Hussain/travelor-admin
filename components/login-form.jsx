@@ -29,39 +29,44 @@ export function LoginForm({ className, ...props }) {
     setformData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlesubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await axios.post(
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/login`,
         {
-          email: formData.email,
-          password: formData.password,
-        },
-        { withCredentials: true }
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 🔥 crucial for cookie to be sent/stored
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        }
       );
+
+      const data = await response.json();
 
       if (response.status === 200) {
         toast.success("Login Successful");
-        localStorage.setItem("user", JSON.stringify(response.data));
+        localStorage.setItem("user", JSON.stringify(data));
         router.push("/dashboard");
       } else if (response.status === 401 || response.status === 400) {
-        toast.error("Login Failed");
+        toast.error(data?.message || "Login Failed");
       } else if (response.status === 500) {
         toast.error("Server Error. Please contact the network admin.");
       } else {
-        toast.error("Unexpected Error. Try again.");
+        toast.error(data?.message || "Unexpected Error. Try again.");
       }
     } catch (error) {
-      console.log(
-        "Login error:",
-        error.response.data.message || error.response.data?.errors[0]?.msg
-      );
-      toast.error(`${error.response.data?.message || "Login Failed"}`);
+      console.error("Login error:", error);
+      toast.error("Something went wrong during login.");
     } finally {
-      setLoading(false); // ✅ Always resets the button
+      setLoading(false);
     }
   };
 

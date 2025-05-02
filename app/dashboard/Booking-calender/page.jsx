@@ -1,4 +1,4 @@
-import BookingCalendar from "./BookingCalender";
+import { BookingCalendar } from "./BookingCalender";
 
 export default function Page() {
   const bookings = [
@@ -17,7 +17,7 @@ export default function Page() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Bookings Calendar</h1>
-      <BookingCalendar bookings={bookings} />
+      <BookingCalendar />
     </div>
   );
 }

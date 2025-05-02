@@ -751,7 +751,7 @@ export const EntityManagement = ({
                                 <ChevronDown
                                   className={`ml-1 h-4 w-4 ${
                                     sortConfig.direction === "desc"
-                                      ? "rotate-180"
+                                      ? "rotate-180 duration"
                                       : ""
                                   }`}
                                 />
