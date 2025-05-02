@@ -9,17 +9,13 @@ const TransportManagement = dynamic(() => import("./transport-management"), {
 const PageWrapper = () => {
   const [AccessToken, setAccessToken] = useState("");
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userData = JSON.parse(localStorage.getItem("user") || {});
-      setAccessToken(userData?.data?.accessToken || "");
-    }
+    const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+    setAccessToken(datafromlocalstorage.data.accessToken);
   }, []);
-
   const fetchFunction = async () => {
-    if (!AccessToken) return; // Wait for token to be available
-
     const response = await axios.get(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
+
       {
         headers: {
           Authorization: `Bearer ${AccessToken}`,
@@ -187,13 +183,6 @@ const PageWrapper = () => {
   };
 
   const addFunction = async (newEntity) => {
-    // Simulating API call
-    // await new Promise((resolve) => setTimeout(resolve, 800));
-    // return {
-    //   id: Date.now(),
-    //   ...newHost,
-    // };
-
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
 
@@ -201,7 +190,7 @@ const PageWrapper = () => {
 
       {
         headers: {
-          Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
+          Authorization: `Bearer ${AccessToken}`,
         },
       }
     );
