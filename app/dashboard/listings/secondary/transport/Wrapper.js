@@ -9,9 +9,10 @@ const TransportManagement = dynamic(() => import("./transport-management"), {
 const PageWrapper = () => {
   const [AccessToken, setAccessToken] = useState("");
   useEffect(() => {
-    // This code runs only on the client side
-    const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
-    setAccessToken(datafromlocalstorage?.data?.accessToken);
+    if (typeof window !== "undefined") {
+      const userData = JSON.parse(localStorage.getItem("user") || {});
+      setAccessToken(userData?.data?.accessToken || "");
+    }
   }, []);
 
   const fetchFunction = async () => {
