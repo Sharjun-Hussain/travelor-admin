@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 const TransportManagement = dynamic(() => import("./transport-management"), {
@@ -7,17 +7,21 @@ const TransportManagement = dynamic(() => import("./transport-management"), {
 });
 
 const PageWrapper = () => {
-  // useEffect(() => {
-  const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
-  console.log(datafromlocalstorage.data.accessToken);
-  // }, []);
+  const [AccessToken, setAccessToken] = useState("");
+  useEffect(() => {
+    // This code runs only on the client side
+    const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+    setAccessToken(datafromlocalstorage?.data?.accessToken);
+  }, []);
 
   const fetchFunction = async () => {
+    if (!AccessToken) return; // Wait for token to be available
+
     const response = await axios.get(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
       {
         headers: {
-          Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
+          Authorization: `Bearer ${AccessToken}`,
         },
         withCredentials: true,
       }
