@@ -21,7 +21,7 @@ const defaultColumns = [
       <div className="flex items-center gap-3">
         <Avatar className="h-9 w-9">
           <AvatarImage
-            src={transport.images?.[0] || ""}
+            src={transport.images?.[0]?.imageUrl || ""}
             alt={transport.title}
           />
           <AvatarFallback className="bg-emerald-100 text-emerald-700">
@@ -66,7 +66,7 @@ const defaultColumns = [
     visible: true,
     sortable: true,
     render: (transport) => (
-      <div className="text-slate-700">${transport.pricePerKmUSD} USD/km</div>
+      <div className="text-slate-700">${transport.pricePerKmUSD}</div>
     ),
   },
   {
