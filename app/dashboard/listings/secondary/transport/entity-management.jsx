@@ -79,6 +79,7 @@ import { exportToExcel } from "@/lib/utils";
 import axios from "axios";
 import { MultiSelect } from "@/components/multi-select";
 import { uploadImagesToS3 } from "@/lib/s3BucketUploader";
+import Image from "next/image";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -199,6 +200,7 @@ export const EntityManagement = ({
   const [formData, setFormData] = useState(initialFormData);
   const [uploadingImages, setUploadingImages] = useState(false);
   const fileInputRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const [FetchedAmenities, setFetchedAmenities] = useState([]);
   const [FetchedTransportTypes, setFetchedTransportTypes] = useState([]);
@@ -420,7 +422,7 @@ export const EntityManagement = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddEntity = (e) => {
+  const handleAddEntity = async (e) => {
     e.preventDefault();
 
     const newformdata = new FormData();
@@ -434,30 +436,16 @@ export const EntityManagement = ({
     newformdata.append("longitude", formData.longitude);
     newformdata.append("operatorName", formData.operatorName);
     newformdata.append("pricePerKmUSD", formData.pricePerKmUSD);
-    newformdata.append("vistaVerified", formData.vistaVerified);
+    // newformdata.append("vistaVerified", formData.vistaVerified);
     newformdata.append("website", formData.website);
     newformdata.append("phone", formData.phone);
+    newformdata.append("seatCount", formData.seatCount);
+    newformdata.append("amenities[]", formData.amenities);
 
-    // if (fileInputRef.current?.files) {
-    //   console.log("hello");
+    selectedFiles.forEach((file) => {
+      newformdata.append("images", file);
+    });
 
-    //   Array.from(fileInputRef.current.files).forEach((file) => {
-    //     newformdata.append("images", file);
-    //   });
-    // }
-
-    // Append image URLs from s3uploadedfiles if they exist
-    if (formData.onlineImages?.length > 0) {
-      formData.onlineImages.forEach((url) => {
-        newformdata.append("images", url);
-      });
-    }
-
-    if (formData.amenities?.length > 0) {
-      formData.amenities.forEach((amenity) => {
-        newformdata.append("amenities", amenity);
-      });
-    }
     //need to remove before production
     for (let [key, value] of newformdata.entries()) {
       if (value instanceof File) {
@@ -508,21 +496,16 @@ export const EntityManagement = ({
   };
 
   const handleImageUpload = async (e) => {
+    console.log("File input ref:", fileInputRef.current);
+    console.log("Files:", fileInputRef.current?.files);
+    console.log("File count:", fileInputRef.current?.files?.length);
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    console.log("Selected files:", files);
     setUploadingImages(true);
 
-    try {
-      const s3uploadedfiles = await uploadImagesToS3(files);
-
-      setFormData((prev) => ({
-        ...prev,
-        onlineImages: [...(prev.onlineImages || []), ...s3uploadedfiles],
-      }));
-    } catch (e) {
-      console.log(e);
-    }
+    setSelectedFiles(files);
 
     try {
       const uploadedUrls = await Promise.all(
@@ -1392,7 +1375,13 @@ export const EntityManagement = ({
                       </Label>
                       <MultiSelect
                         options={FetchedAmenities}
-                        onValueChange={(item) => formData.amenities.push(item)}
+                        onValueChange={(selectedItems) => {
+                          // selectedItems should be an array of the currently selected amenity IDs
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenities: selectedItems, // This replaces the entire amenities array
+                          }));
+                        }}
                       />
                     </div>
 
@@ -1532,6 +1521,24 @@ export const EntityManagement = ({
                         onChange={handleInputChange}
                         className="border-slate-300"
                         rows={3}
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
+                        Seat Count*
+                      </Label>
+                      <Input
+                        id="seatCount"
+                        name="seatCount"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="Enter Number of seats"
+                        value={formData.seatCount}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
                       />
                     </div>
                   </div>
@@ -1782,11 +1789,11 @@ export const EntityManagement = ({
                   {/* Left Column */}
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-title" className="text-slate-700">
+                      <Label htmlFor="title" className="text-slate-700">
                         Transport Title*
                       </Label>
                       <Input
-                        id="edit-title"
+                        id="title"
                         name="title"
                         placeholder="Enter transport title"
                         value={formData.title}
@@ -1796,29 +1803,37 @@ export const EntityManagement = ({
                       />
                     </div>
 
-                    <div className="grid gap-2 w-full">
+                    <div className="grid gap-2 ">
                       <Label
-                        htmlFor="edit-transportTypeId"
+                        htmlFor="transportTypeId"
                         className="text-slate-700"
                       >
                         Transport Type*
                       </Label>
                       <Select
-                        value={formData.transportTypeId}
-                        onValueChange={(value) =>
+                        value={formData.transportTypeId?.toString() || ""}
+                        onValueChange={(value) => {
                           setFormData({
                             ...formData,
-                            transportTypeId: value,
-                          })
-                        }
+                            transportTypeId: Number(value), // storing the ID
+                          });
+                        }}
                         required
                       >
                         <SelectTrigger className="border-slate-300 w-full">
-                          <SelectValue placeholder="Select transport type" />
+                          <SelectValue placeholder="Select transport type">
+                            {FetchedTransportTypes.find(
+                              (item) => item.id === formData.transportTypeId
+                            )?.name || "Select transport type"}
+                          </SelectValue>
                         </SelectTrigger>
+
                         <SelectContent>
                           {FetchedTransportTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id}>
+                            <SelectItem
+                              key={type.id}
+                              value={type.id.toString()}
+                            >
                               {type.name}
                             </SelectItem>
                           ))}
@@ -1827,14 +1842,11 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-operatorName"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="operatorName" className="text-slate-700">
                         Operator Name*
                       </Label>
                       <Input
-                        id="edit-operatorName"
+                        id="operatorName"
                         name="operatorName"
                         placeholder="Enter operator name"
                         value={formData.operatorName}
@@ -1846,13 +1858,29 @@ export const EntityManagement = ({
 
                     <div className="grid gap-2">
                       <Label
-                        htmlFor="edit-pricePerKmUSD"
+                        htmlFor="transportTypeId"
                         className="text-slate-700"
                       >
+                        Amenities
+                      </Label>
+                      <MultiSelect
+                        options={FetchedAmenities}
+                        onValueChange={(selectedItems) => {
+                          // selectedItems should be an array of the currently selected amenity IDs
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenities: selectedItems, // This replaces the entire amenities array
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
                         Price per Kilometer (USD)*
                       </Label>
                       <Input
-                        id="edit-pricePerKmUSD"
+                        id="pricePerKmUSD"
                         name="pricePerKmUSD"
                         type="number"
                         min="0"
@@ -1866,12 +1894,12 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-images" className="text-slate-700">
+                      <Label htmlFor="images" className="text-slate-700">
                         Images
                       </Label>
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap gap-2">
-                          {formData.images?.map((image, index) => (
+                          {formData.images.map((image, index) => (
                             <div key={index} className="relative">
                               <img
                                 src={image}
@@ -1890,7 +1918,7 @@ export const EntityManagement = ({
                         </div>
                         <input
                           type="file"
-                          id="edit-images"
+                          id="images"
                           ref={fileInputRef}
                           onChange={handleImageUpload}
                           multiple
@@ -1919,17 +1947,14 @@ export const EntityManagement = ({
                   {/* Right Column */}
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-departureCity"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="departureCity" className="text-slate-700">
                         Departure City*
                       </Label>
                       <Input
-                        id="edit-departureCity"
-                        name="location.departureCity"
+                        id="departureCity"
+                        name="departureCity"
                         placeholder="Enter departure city"
-                        value={formData?.departureCity || ""}
+                        value={formData.departureCity || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1937,28 +1962,22 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-arrivalCity"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="arrivalCity" className="text-slate-700">
                         Arrival City*
                       </Label>
                       <Input
-                        id="edit-arrivalCity"
-                        name="location.arrivalCity"
+                        id="arrivalCity"
+                        name="arrivalCity"
                         placeholder="Enter arrival city"
-                        value={formData?.arrivalCity || ""}
+                        value={formData.arrivalCity || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
                       />
                     </div>
 
-                    <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-vistaVerified"
-                        className="text-slate-700"
-                      >
+                    <div className="grid gap-2 ">
+                      <Label htmlFor="vistaVerified" className="text-slate-700">
                         Vista Verified
                       </Label>
                       <Select
@@ -1970,7 +1989,7 @@ export const EntityManagement = ({
                           })
                         }
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select verification status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1981,14 +2000,11 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-description"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="description" className="text-slate-700">
                         Description
                       </Label>
                       <Textarea
-                        id="edit-description"
+                        id="description"
                         name="description"
                         placeholder="Enter transport description"
                         value={formData.description}
@@ -1997,18 +2013,36 @@ export const EntityManagement = ({
                         rows={3}
                       />
                     </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
+                        Seat Count*
+                      </Label>
+                      <Input
+                        id="seatCount"
+                        name="seatCount"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="Enter Number of seats"
+                        value={formData.seatCount}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Amenities Section */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
+                {/* <div className="border-t border-slate-200 pt-4 mt-4">
                   <h3 className="text-lg font-medium text-slate-800 mb-4">
                     Amenities
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
-                        id="edit-airConditioned"
+                        id="airConditioned"
                         checked={
                           formData.amenities?.find(
                             (a) => a.type === "Air Conditioned"
@@ -2030,20 +2064,18 @@ export const EntityManagement = ({
                           setFormData({ ...formData, amenities });
                         }}
                       />
-                      <Label htmlFor="edit-airConditioned">
-                        Air Conditioned
-                      </Label>
+                      <Label htmlFor="airConditioned">Air Conditioned</Label>
                     </div>
 
                     <div className="grid gap-2">
                       <Label
-                        htmlFor="edit-passengerCapacity"
+                        htmlFor="passengerCapacity"
                         className="text-slate-700"
                       >
                         Passenger Capacity
                       </Label>
                       <Input
-                        id="edit-passengerCapacity"
+                        id="passengerCapacity"
                         type="number"
                         min="1"
                         placeholder="Enter capacity"
@@ -2072,14 +2104,11 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-luggageSpace"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="luggageSpace" className="text-slate-700">
                         Luggage Space (bags)
                       </Label>
                       <Input
-                        id="edit-luggageSpace"
+                        id="luggageSpace"
                         type="number"
                         min="0"
                         placeholder="Enter luggage capacity"
@@ -2107,7 +2136,7 @@ export const EntityManagement = ({
                       />
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Contact Details Section */}
                 <div className="border-t border-slate-200 pt-4 mt-4">
@@ -2116,35 +2145,29 @@ export const EntityManagement = ({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-contactPhone"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="contactPhone" className="text-slate-700">
                         Phone Number
                       </Label>
                       <Input
-                        id="edit-contactPhone"
-                        name="contactDetails.phone"
+                        id="contactPhone"
+                        name="phone"
                         placeholder="Enter phone number"
-                        value={formData?.phone || ""}
+                        value={formData.phone || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-contactEmail"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="contactEmail" className="text-slate-700">
                         Email
                       </Label>
                       <Input
-                        id="edit-contactEmail"
-                        name="contactDetails.email"
+                        id="contactEmail"
+                        name="email"
                         type="email"
                         placeholder="Enter email"
-                        value={formData?.email || ""}
+                        value={formData.email || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2152,17 +2175,17 @@ export const EntityManagement = ({
 
                     <div className="grid gap-2">
                       <Label
-                        htmlFor="edit-contactWebsite"
+                        htmlFor="contactWebsite"
                         className="text-slate-700"
                       >
                         Website
                       </Label>
                       <Input
-                        id="edit-contactWebsite"
-                        name="contactDetails.website"
+                        id="contactWebsite"
+                        name="website"
                         type="url"
                         placeholder="Enter website URL"
-                        value={formData?.website || ""}
+                        value={formData.website || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2177,35 +2200,32 @@ export const EntityManagement = ({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-latitude" className="text-slate-700">
+                      <Label htmlFor="latitude" className="text-slate-700">
                         Latitude
                       </Label>
                       <Input
-                        id="edit-latitude"
-                        name="location.coordinates.lat"
+                        id="latitude"
+                        name="latitude"
                         type="number"
                         step="any"
                         placeholder="Enter latitude"
-                        value={formData?.latitude || ""}
+                        value={formData.latitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-longitude"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="longitude" className="text-slate-700">
                         Longitude
                       </Label>
                       <Input
-                        id="edit-longitude"
-                        name="location.coordinates.lng"
+                        id="longitude"
+                        name="longitude"
                         type="number"
                         step="any"
                         placeholder="Enter longitude"
-                        value={formData?.longitude || ""}
+                        value={formData.longitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -2246,8 +2266,9 @@ export const EntityManagement = ({
               <div className="flex flex-col items-center p-4 border rounded-lg border-slate-200 bg-slate-50">
                 {currentEntity.images?.[0] ? (
                   <div className="relative w-full h-48 mb-4">
-                    <img
-                      src={currentEntity.images[0]}
+                    <Image
+                      fill
+                      src={currentEntity.images[0].imageUrl}
                       alt={currentEntity.title}
                       className="w-full h-full object-cover rounded-md"
                     />
@@ -2345,9 +2366,10 @@ export const EntityManagement = ({
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {currentEntity.images.slice(1).map((image, index) => (
-                        <img
+                        <Image
                           key={index}
                           src={image}
+                          fill
                           alt={`Transport ${index + 1}`}
                           className="h-20 w-20 object-cover rounded-md"
                         />

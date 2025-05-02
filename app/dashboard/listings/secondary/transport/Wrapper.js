@@ -12,7 +12,11 @@ const PageWrapper = () => {
     const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
     setAccessToken(datafromlocalstorage.data.accessToken);
   }, []);
+  // Mock API functions
   const fetchFunction = async () => {
+    // Simulating API call delay
+    // await new Promise((resolve) => setTimeout(resolve, 500));
+
     const response = await axios.get(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
 
