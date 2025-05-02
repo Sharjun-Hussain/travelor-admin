@@ -1864,6 +1864,9 @@ export const EntityManagement = ({
                         Amenities
                       </Label>
                       <MultiSelect
+                        defaultValue={formData.amenities.map(
+                          (amenity) => amenity.id
+                        )}
                         options={FetchedAmenities}
                         onValueChange={(selectedItems) => {
                           // selectedItems should be an array of the currently selected amenity IDs
@@ -1902,7 +1905,7 @@ export const EntityManagement = ({
                           {formData.images.map((image, index) => (
                             <div key={index} className="relative">
                               <img
-                                src={image}
+                                src={image.imageUrl}
                                 alt={`Transport ${index}`}
                                 className="h-20 w-20 object-cover rounded-md"
                               />
