@@ -217,6 +217,7 @@ export const EntityManagement = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
           },
+          withCredentials: true,
         }
       );
 
@@ -231,6 +232,7 @@ export const EntityManagement = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
           },
+          withCredentials: true,
         }
       );
 
@@ -440,7 +442,7 @@ export const EntityManagement = ({
     newformdata.append("website", formData.website);
     newformdata.append("phone", formData.phone);
     newformdata.append("seatCount", formData.seatCount);
-    newformdata.append("amenities[]", formData.amenities);
+    newformdata.append("amenities", formData.amenities);
 
     selectedFiles.forEach((file) => {
       newformdata.append("images", file);

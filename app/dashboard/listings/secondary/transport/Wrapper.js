@@ -10,7 +10,8 @@ const PageWrapper = () => {
   const [AccessToken, setAccessToken] = useState("");
   useEffect(() => {
     const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
-    setAccessToken(datafromlocalstorage.data.accessToken);
+    setAccessToken(datafromlocalstorage?.data?.accessToken);
+    console.log(datafromlocalstorage?.data?.accessToken);
   }, []);
   // Mock API functions
   const fetchFunction = async () => {
@@ -196,6 +197,7 @@ const PageWrapper = () => {
         headers: {
           Authorization: `Bearer ${AccessToken}`,
         },
+        withCredentials: true,
       }
     );
     return response.data.data;
