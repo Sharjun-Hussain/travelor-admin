@@ -221,8 +221,16 @@ const PageWrapper = () => {
 
   const deletFucntion = async (id) => {
     // Simulating API call
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    alert(id);
+    const response = await axios.delete(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports/${id}`,
+
+      {
+        headers: {
+          Authorization: `Bearer ${AccessToken}`,
+        },
+        withCredentials: true,
+      }
+    );
     return id;
   };
 
