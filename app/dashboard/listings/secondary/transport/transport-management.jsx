@@ -110,7 +110,11 @@ const defaultColumns = [
         <br />
         {transport?.email || "No email"}
         <br />
-        {/* {transport?.website ? <Link > {transport?.website}</Link> : "No Website"} */}
+        {transport?.website ? (
+          <Link href={transport?.website}> {transport?.website}</Link>
+        ) : (
+          "No Website"
+        )}
       </div>
     ),
   },

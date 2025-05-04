@@ -9,10 +9,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { EntityManagement } from "@/app/dashboard/listings/secondary/local-artists/entity-management";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 
 const defaultColumns = [
   {
-    key: "name",
+    key: "title",
     label: "Artist",
     visible: true,
     sortable: true,
@@ -21,7 +22,7 @@ const defaultColumns = [
         <Avatar className="h-9 w-9">
           <AvatarImage src={artist.images?.[0] || ""} alt={artist.name} />
           <AvatarFallback className="bg-indigo-100 text-indigo-700">
-            {artist.name
+            {artist.title
               .split(" ")
               .map((word) => word[0])
               .join("")
@@ -30,12 +31,12 @@ const defaultColumns = [
         </Avatar>
         <div>
           <p
-            title={artist.name}
+            title={artist.title}
             className="font-medium truncate max-w-[150px] text-slate-800"
           >
-            {artist.name}
+            {artist.title}
           </p>
-          <p className="text-sm text-slate-500">{artist.artStyle}</p>
+          <p className="text-sm text-slate-500">{artist.specialization}</p>
         </div>
       </div>
     ),
@@ -47,21 +48,11 @@ const defaultColumns = [
     sortable: true,
     render: (artist) => (
       <div className="text-slate-700">
-        {artist.location?.city}, {artist.location?.province}
+        {artist?.city}, {artist?.province}
       </div>
     ),
   },
-  {
-    key: "languagesSpoken",
-    label: "Languages",
-    visible: true,
-    sortable: false,
-    render: (artist) => (
-      <div className="text-sm text-slate-600 truncate max-w-[120px]">
-        {artist.languagesSpoken?.join(", ") || "N/A"}
-      </div>
-    ),
-  },
+
   {
     key: "rating",
     label: "Rating",
@@ -79,17 +70,50 @@ const defaultColumns = [
     },
   },
   {
-    key: "reviews",
-    label: "Reviews",
+    key: "vistaVerified",
+    label: "Verified",
     visible: true,
     sortable: false,
     render: (artist) => (
-      <div className="text-sm text-slate-600">
-        {artist.travelerReviews?.length || 0} traveler,{" "}
-        {artist.slvistaReviews?.length || 0} slvista
+      <Badge variant={artist.vistaVerified ? "success" : "outline"}>
+        {artist.vistaVerified ? "Verified" : "Not Verified"}
+      </Badge>
+    ),
+  },
+  {
+    key: "contactDetails",
+    label: "Contact",
+    visible: true,
+    sortable: false,
+    render: (artist) => (
+      <div
+        title={`${artist?.phone} - ${artist?.email}`}
+        className="text-sm text-slate-600 truncate max-w-[200px]"
+      >
+        {artist?.phone || "No phone"}
+        <br />
+        {artist?.email || "No email"}
+        <br />
+        {artist?.website ? (
+          <Link href={artist?.website}> {artist?.website}</Link>
+        ) : (
+          "No Website"
+        )}
       </div>
     ),
   },
+  // {
+  //   key: "reviews",
+  //   label: "Reviews",
+  //   visible: true,
+  //   sortable: false,
+  //   render: (artist) => (
+  //     <div className="text-sm text-slate-600">
+  //       {artist.travelerReviews?.length || 0} traveler,{" "}
+  //       {artist.slvistaReviews?.length || 0} slvista
+  //     </div>
+  //   ),
+  // },
 ];
 
 const renderStatusBadge = (status) => {

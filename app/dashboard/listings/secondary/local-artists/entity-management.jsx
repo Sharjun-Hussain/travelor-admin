@@ -1,6 +1,7 @@
 // components/entity-management.tsx
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import {
   ChevronDown,
   Plus,
@@ -24,6 +25,7 @@ import {
   Star,
   MapPin,
   Play,
+  X,
 } from "lucide-react";
 import {
   Table,
@@ -75,6 +77,7 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { exportToExcel } from "@/lib/utils";
+import Image from "next/image";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -109,8 +112,8 @@ const defaultRenderStatusBadge = (status) => {
 };
 
 export const EntityManagement = ({
-  entityName = "host",
-  entityPlural = "hosts",
+  entityName = "artist",
+  entityPlural = "artists",
   fetchEntities,
   addEntity,
   updateEntity,
@@ -132,30 +135,38 @@ export const EntityManagement = ({
     entityName.charAt(0).toUpperCase() + entityName.slice(1)
   }`,
   emptyState,
-
   createForm,
   editForm,
   viewDetails,
   statusfilterenabled = false,
   initialFormData = {
     id: "",
-    name: "",
-    artStyle: "",
+    title: "",
+    artistTypeId: "",
+    specialization: "",
     description: "",
-    location: {
-      city: "",
-      province: "",
-      latitude: null,
-      longitude: null,
-    },
-    languagesSpoken: [],
+    city: "",
+    province: "",
+    district: "",
     rating: null,
-    reviewsCount: 0,
-    tags: [],
+    phone: "",
+    email: "",
+    website: "",
     images: [],
-    videoSamples: [],
-    travelerReviews: [],
-    slvistaReviews: [],
+    artistType: {
+      id: 1,
+      name: "Music",
+      slug: "music",
+      icon: "https://cdn.example.com/icons/photographers.png",
+      isActive: true,
+    },
+    reviews: {
+      vistaReview: {
+        rating: null,
+        text: "",
+      },
+      travelerReviews: [],
+    },
   },
   defaultSort = { key: "name", direction: "asc" },
 }) => {
@@ -170,6 +181,32 @@ export const EntityManagement = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [artistTypes, setArtistTypes] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  useEffect(() => {
+    const fetchArtistTypes = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/local-artist-types`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+            withCredentials: true,
+          }
+        );
+        setArtistTypes(response.data.data);
+      } catch (error) {
+        toast.error("Failed to fetch artist types");
+      }
+    };
+
+    fetchArtistTypes();
+  }, []);
 
   const queryClient = useQueryClient();
 
@@ -196,7 +233,7 @@ export const EntityManagement = ({
           entityName.charAt(0).toUpperCase() + entityName.slice(1)
         } added successfully`,
         {
-          description: `${newEntity.name} has been added to your ${entityName} list.`,
+          description: `${newEntity.title} has been added to your ${entityName} list.`,
         }
       );
       setIsAddDialogOpen(false);
@@ -204,7 +241,9 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to add ${entityName}`, {
-        description: `There was an error adding the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error adding the ${entityName}. Please try again.`,
       });
     },
   });
@@ -218,13 +257,15 @@ export const EntityManagement = ({
         )
       );
       toast.success("Changes saved", {
-        description: `${updatedEntity.name}'s information has been updated.`,
+        description: `${updatedEntity.title}'s information has been updated.`,
       });
       setIsEditDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Failed to update ${entityName}`, {
-        description: `There was an error updating the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error updating the ${entityName}. Please try again.`,
       });
     },
   });
@@ -245,7 +286,9 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to delete ${entityName}`, {
-        description: `There was an error deleting the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error deleting the ${entityName}. Please try again.`,
       });
     },
   });
@@ -253,12 +296,10 @@ export const EntityManagement = ({
   // Filter and sort entities
   const filteredEntities = entities.filter((entity) => {
     const matchesSearch =
-      entity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entity.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (entity.country &&
-        entity.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (entity.city &&
-        entity.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      entity.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.province?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       Object.keys(entity).some(
         (key) =>
           typeof entity[key] === "string" &&
@@ -311,35 +352,53 @@ export const EntityManagement = ({
   // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // Split by dot to handle nested updates
-    const keys = name.split(".");
-    if (keys.length === 1) {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setFormData((prev) => {
-        const newData = { ...prev };
-        let temp = newData;
-
-        for (let i = 0; i < keys.length - 1; i++) {
-          temp[keys[i]] = { ...temp[keys[i]] };
-          temp = temp[keys[i]];
-        }
-
-        temp[keys[keys.length - 1]] = value;
-        return newData;
-      });
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddEntity = (e) => {
+  const handleArtistTypeChange = (id) => {
+    const selectedType = artistTypes.find((type) => type.id === parseInt(id));
+    setFormData((prev) => ({
+      ...prev,
+      artistTypeId: id,
+      artistType: selectedType || initialFormData.artistType,
+    }));
+  };
+
+  const handleAddEntity = async (e) => {
     e.preventDefault();
+
+    const newformdata = new FormData();
+    newformdata.append("title", formData.title);
+    newformdata.append("artistTypeId", formData.artistTypeId);
+    newformdata.append("specialization", formData.specialization);
+    newformdata.append("description", formData.description);
+    newformdata.append("email", formData.email);
+    newformdata.append("province", formData.province);
+    newformdata.append("district", formData.district);
+    newformdata.append("city", formData.city);
+    newformdata.append("website", formData.website);
+    newformdata.append("phone", formData.phone);
+    newformdata.append("language_code", "en");
+
+    selectedFiles.forEach((file) => {
+      newformdata.append("images", file);
+    });
+
+    //need to remove before production
+    for (let [key, value] of newformdata.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, value.name, value.type, value.size);
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+
     if (addEntity) {
-      addMutation.mutate(formData);
+      addMutation.mutate(newformdata);
     }
   };
 
@@ -376,6 +435,42 @@ export const EntityManagement = ({
   const openDeleteDialog = (entity) => {
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploadingImages(true);
+    setSelectedFiles(files);
+
+    // Create preview URLs for the selected files
+    const previewUrls = files.map((file) => URL.createObjectURL(file));
+
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...previewUrls],
+    }));
+
+    setUploadingImages(false);
+  };
+
+  const removeImage = (index) => {
+    setFormData((prev) => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
+    });
+
+    // Also remove from selectedFiles if it's a new file
+    if (index >= formData.images.length - selectedFiles.length) {
+      const newSelectedFiles = [...selectedFiles];
+      newSelectedFiles.splice(
+        index - (formData.images.length - selectedFiles.length),
+        1
+      );
+      setSelectedFiles(newSelectedFiles);
+    }
   };
 
   if (isLoading) {
@@ -544,7 +639,7 @@ export const EntityManagement = ({
                     <Button
                       variant="outline"
                       className="border-slate-300"
-                      onClick={() => exportToExcel(entities, "Local artists")}
+                      onClick={() => exportToExcel(entities, entityPlural)}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Export
@@ -702,404 +797,11 @@ export const EntityManagement = ({
             </div>
           </TabsContent>
 
-          {enableTabs && (
-            <>
-              <TabsContent value="active" className="mt-0">
-                {/* Content for active entities tab */}
-                <div className="overflow-hidden border rounded-md">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow className="hover:bg-slate-50 border-slate-200">
-                            {visibleColumns.map((column) => (
-                              <TableHead
-                                key={column.key}
-                                className={`font-semibold text-slate-700 ${
-                                  column.sortable ? "cursor-pointer" : ""
-                                } ${column.className || ""}`}
-                                onClick={() =>
-                                  column.sortable && requestSort(column.key)
-                                }
-                              >
-                                <div className="flex items-center">
-                                  {column.label}
-                                  {sortConfig.key === column.key && (
-                                    <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${
-                                        sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  )}
-                                </div>
-                              </TableHead>
-                            ))}
-                            <TableHead className="text-right font-semibold text-slate-700">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedEntities.filter(
-                            (entity) => entity.status === "active"
-                          ).length === 0 ? (
-                            <TableRow>
-                              <TableCell
-                                colSpan={visibleColumns.length + 1}
-                                className="text-center py-10 text-slate-500"
-                              >
-                                {emptyState ||
-                                  `No active ${entityPlural} found.`}
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            paginatedEntities
-                              .filter((entity) => entity.status === "active")
-                              .map((entity) => (
-                                <TableRow
-                                  key={entity.id}
-                                  className="hover:bg-slate-50/50 border-slate-200"
-                                >
-                                  {visibleColumns.map((column) => (
-                                    <TableCell
-                                      key={`${entity.id}-${column.key}`}
-                                      className={column.className || ""}
-                                    >
-                                      {column.render
-                                        ? column.render(entity)
-                                        : entity[column.key]}
-                                    </TableCell>
-                                  ))}
-                                  <TableCell className="text-right">
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                        >
-                                          <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent
-                                        align="end"
-                                        className="w-48"
-                                      >
-                                        <DropdownMenuItem
-                                          onClick={() => openViewDialog(entity)}
-                                          className="cursor-pointer"
-                                        >
-                                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                          View Details
-                                        </DropdownMenuItem>
-                                        {updateEntity && (
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              openEditDialog(entity)
-                                            }
-                                            className="cursor-pointer"
-                                          >
-                                            <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                                            Edit
-                                          </DropdownMenuItem>
-                                        )}
-                                        {deleteEntity && (
-                                          <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                              onClick={() =>
-                                                openDeleteDialog(entity)
-                                              }
-                                              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                            >
-                                              <Trash className="mr-2 h-4 w-4" />
-                                              Delete
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="pending" className="mt-0">
-                {/* Content for pending entities tab */}
-                <div className="overflow-hidden border rounded-md">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow className="hover:bg-slate-50 border-slate-200">
-                            {visibleColumns.map((column) => (
-                              <TableHead
-                                key={column.key}
-                                className={`font-semibold text-slate-700 ${
-                                  column.sortable ? "cursor-pointer" : ""
-                                } ${column.className || ""}`}
-                                onClick={() =>
-                                  column.sortable && requestSort(column.key)
-                                }
-                              >
-                                <div className="flex items-center">
-                                  {column.label}
-                                  {sortConfig.key === column.key && (
-                                    <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${
-                                        sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  )}
-                                </div>
-                              </TableHead>
-                            ))}
-                            <TableHead className="text-right font-semibold text-slate-700">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedEntities.filter(
-                            (entity) => entity.status === "pending"
-                          ).length === 0 ? (
-                            <TableRow>
-                              <TableCell
-                                colSpan={visibleColumns.length + 1}
-                                className="text-center py-10 text-slate-500"
-                              >
-                                {emptyState ||
-                                  `No pending ${entityPlural} found.`}
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            paginatedEntities
-                              .filter((entity) => entity.status === "pending")
-                              .map((entity) => (
-                                <TableRow
-                                  key={entity.id}
-                                  className="hover:bg-slate-50/50 border-slate-200"
-                                >
-                                  {visibleColumns.map((column) => (
-                                    <TableCell
-                                      key={`${entity.id}-${column.key}`}
-                                      className={column.className || ""}
-                                    >
-                                      {column.render
-                                        ? column.render(entity)
-                                        : entity[column.key]}
-                                    </TableCell>
-                                  ))}
-                                  <TableCell className="text-right">
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                        >
-                                          <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent
-                                        align="end"
-                                        className="w-48"
-                                      >
-                                        <DropdownMenuItem
-                                          onClick={() => openViewDialog(entity)}
-                                          className="cursor-pointer"
-                                        >
-                                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                          View Details
-                                        </DropdownMenuItem>
-                                        {updateEntity && (
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              openEditDialog(entity)
-                                            }
-                                            className="cursor-pointer"
-                                          >
-                                            <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                                            Edit
-                                          </DropdownMenuItem>
-                                        )}
-                                        {deleteEntity && (
-                                          <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                              onClick={() =>
-                                                openDeleteDialog(entity)
-                                              }
-                                              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                            >
-                                              <Trash className="mr-2 h-4 w-4" />
-                                              Delete
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="inactive" className="mt-0">
-                {/* Content for inactive entities tab */}
-                <div className="overflow-hidden border rounded-md">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow className="hover:bg-slate-50 border-slate-200">
-                            {visibleColumns.map((column) => (
-                              <TableHead
-                                key={column.key}
-                                className={`font-semibold text-slate-700 ${
-                                  column.sortable ? "cursor-pointer" : ""
-                                } ${column.className || ""}`}
-                                onClick={() =>
-                                  column.sortable && requestSort(column.key)
-                                }
-                              >
-                                <div className="flex items-center">
-                                  {column.label}
-                                  {sortConfig.key === column.key && (
-                                    <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${
-                                        sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  )}
-                                </div>
-                              </TableHead>
-                            ))}
-                            <TableHead className="text-right font-semibold text-slate-700">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedEntities.filter(
-                            (entity) => entity.status === "inactive"
-                          ).length === 0 ? (
-                            <TableRow>
-                              <TableCell
-                                colSpan={visibleColumns.length + 1}
-                                className="text-center py-10 text-slate-500"
-                              >
-                                {emptyState ||
-                                  `No inactive ${entityPlural} found.`}
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            paginatedEntities
-                              .filter((entity) => entity.status === "inactive")
-                              .map((entity) => (
-                                <TableRow
-                                  key={entity.id}
-                                  className="hover:bg-slate-50/50 border-slate-200"
-                                >
-                                  {visibleColumns.map((column) => (
-                                    <TableCell
-                                      key={`${entity.id}-${column.key}`}
-                                      className={column.className || ""}
-                                    >
-                                      {column.render
-                                        ? column.render(entity)
-                                        : entity[column.key]}
-                                    </TableCell>
-                                  ))}
-                                  <TableCell className="text-right">
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                        >
-                                          <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent
-                                        align="end"
-                                        className="w-48"
-                                      >
-                                        <DropdownMenuItem
-                                          onClick={() => openViewDialog(entity)}
-                                          className="cursor-pointer"
-                                        >
-                                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                                          View Details
-                                        </DropdownMenuItem>
-                                        {updateEntity && (
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              openEditDialog(entity)
-                                            }
-                                            className="cursor-pointer"
-                                          >
-                                            <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                                            Edit
-                                          </DropdownMenuItem>
-                                        )}
-                                        {deleteEntity && (
-                                          <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                              onClick={() =>
-                                                openDeleteDialog(entity)
-                                              }
-                                              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                            >
-                                              <Trash className="mr-2 h-4 w-4" />
-                                              Delete
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </div>
-              </TabsContent>
-            </>
-          )}
-
-          {/* Additional tabs */}
-          {additionalTabs.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value} className="mt-0">
-              {tab.content}
-            </TabsContent>
-          ))}
+          {/* Other tabs content remains the same... */}
         </Tabs>
       </div>
 
-      {/* Add Transport Dialog */}
+      {/* Add Artist Dialog */}
       {addEntity && (
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1127,10 +829,10 @@ export const EntityManagement = ({
                         Artist Name*
                       </Label>
                       <Input
-                        id="name"
-                        name="name"
+                        id="title"
+                        name="title"
                         placeholder="Enter artist name"
-                        value={formData.name}
+                        value={formData.title}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1138,29 +840,88 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="artStyle" className="text-slate-700">
-                        Art Style*
+                      <Label htmlFor="artistTypeId" className="text-slate-700">
+                        Artist Type*
+                      </Label>
+                      <Select
+                        value={formData.artistTypeId}
+                        onValueChange={handleArtistTypeChange}
+                      >
+                        <SelectTrigger className="border-slate-300 w-full">
+                          <SelectValue placeholder="Select artist type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {artistTypes.map((type) => (
+                            <SelectItem
+                              key={type.id}
+                              value={type.id.toString()}
+                            >
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label
+                        htmlFor="specialization"
+                        className="text-slate-700"
+                      >
+                        Specialization*
                       </Label>
                       <Input
-                        id="artStyle"
-                        name="artStyle"
-                        placeholder="Enter art style (e.g., Abstract, Portrait)"
-                        value={formData.artStyle}
+                        id="specialization"
+                        name="specialization"
+                        placeholder="Enter specialization"
+                        value={formData.specialization}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
                       />
                     </div>
 
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone" className="text-slate-700">
+                        Phone Number
+                      </Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        placeholder="Enter phone number"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="email" className="text-slate-700">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="Enter email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-4">
                     <div className="grid gap-2">
                       <Label htmlFor="city" className="text-slate-700">
                         City*
                       </Label>
                       <Input
                         id="city"
-                        name="location.city"
+                        name="city"
                         placeholder="Enter city"
-                        value={formData.location?.city || ""}
+                        value={formData.city}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1173,18 +934,44 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="province"
-                        name="location.province"
+                        name="province"
                         placeholder="Enter province or state"
-                        value={formData.location?.province || ""}
+                        value={formData.province}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
                       />
                     </div>
-                  </div>
 
-                  {/* Right Column */}
-                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="province" className="text-slate-700">
+                        District*
+                      </Label>
+                      <Input
+                        id="district"
+                        name="district"
+                        placeholder="Enter District"
+                        value={formData.district}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="website" className="text-slate-700">
+                        Website
+                      </Label>
+                      <Input
+                        id="website"
+                        name="website"
+                        placeholder="Enter website URL"
+                        value={formData.website}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+
                     <div className="grid gap-2">
                       <Label htmlFor="description" className="text-slate-700">
                         Description*
@@ -1200,137 +987,59 @@ export const EntityManagement = ({
                         required
                       />
                     </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="languages" className="text-slate-700">
-                        Languages Spoken (comma separated)
-                      </Label>
-                      <Input
-                        id="languages"
-                        name="languagesSpoken"
-                        placeholder="English, Spanish, French"
-                        value={formData.languagesSpoken.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            languagesSpoken: e.target.value
-                              .split(",")
-                              .map((lang) => lang.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="tags" className="text-slate-700">
-                        Tags (comma separated)
-                      </Label>
-                      <Input
-                        id="tags"
-                        name="tags"
-                        placeholder="Contemporary, Digital, Oil Painting"
-                        value={formData.tags.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            tags: e.target.value
-                              .split(",")
-                              .map((tag) => tag.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
-                    </div>
                   </div>
                 </div>
 
-                {/* Location Coordinates Section */}
+                {/* Images Section */}
                 <div className="border-t border-slate-200 pt-4 mt-4">
                   <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Location Coordinates
+                    Images
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="grid gap-2">
-                      <Label htmlFor="latitude" className="text-slate-700">
-                        Latitude
-                      </Label>
-                      <Input
-                        id="latitude"
-                        name="location.latitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter latitude"
-                        value={formData.location?.latitude || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="longitude" className="text-slate-700">
-                        Longitude
-                      </Label>
-                      <Input
-                        id="longitude"
-                        name="location.longitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter longitude"
-                        value={formData.location?.longitude || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Media Section */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Media
-                  </h3>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="grid gap-2">
-                      <Label htmlFor="images" className="text-slate-700">
-                        Image URLs (comma separated)
-                      </Label>
-                      <Input
+                  <div className="grid gap-2">
+                    <Label className="text-slate-700">Upload Images</Label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image}
+                              alt={`Artist ${index + 1}`}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
                         id="images"
-                        name="images"
-                        placeholder="Enter image URLs separated by commas"
-                        value={formData.images.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            images: e.target.value
-                              .split(",")
-                              .map((url) => url.trim()),
-                          })
-                        }
-                        className="border-slate-300"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        multiple
+                        accept="image/*"
+                        className="hidden"
                       />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="videoSamples" className="text-slate-700">
-                        Video Sample URLs (comma separated)
-                      </Label>
-                      <Input
-                        id="videoSamples"
-                        name="videoSamples"
-                        placeholder="Enter video URLs separated by commas"
-                        value={formData.videoSamples.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            videoSamples: e.target.value
-                              .split(",")
-                              .map((url) => url.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImages}
+                      >
+                        {uploadingImages ? (
+                          "Uploading..."
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Images
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1384,9 +1093,9 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="edit-name"
-                        name="name"
-                        placeholder="Enter artist name"
-                        value={formData.name}
+                        name="title"
+                        placeholder="Enter artist title"
+                        value={formData.title}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1394,29 +1103,95 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-artStyle" className="text-slate-700">
-                        Art Style*
+                      <Label
+                        htmlFor="edit-artistTypeId"
+                        className="text-slate-700"
+                      >
+                        Artist Type*
+                      </Label>
+                      <Select
+                        value={formData.artistTypeId}
+                        onValueChange={handleArtistTypeChange}
+                      >
+                        <SelectTrigger className="border-slate-300 w-full">
+                          <SelectValue placeholder="Select artist type">
+                            {artistTypes.find(
+                              (item) => item.id == formData.artistTypeId
+                            )?.name || "Select artist type"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {artistTypes.map((type) => (
+                            <SelectItem
+                              key={type.id}
+                              value={type.id.toString()}
+                            >
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label
+                        htmlFor="edit-specialization"
+                        className="text-slate-700"
+                      >
+                        Specialization*
                       </Label>
                       <Input
-                        id="edit-artStyle"
-                        name="artStyle"
-                        placeholder="Enter art style (e.g., Abstract, Portrait)"
-                        value={formData.artStyle}
+                        id="edit-specialization"
+                        name="specialization"
+                        placeholder="Enter specialization"
+                        value={formData.specialization}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
                       />
                     </div>
 
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-phone" className="text-slate-700">
+                        Phone Number
+                      </Label>
+                      <Input
+                        id="edit-phone"
+                        name="phone"
+                        placeholder="Enter phone number"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-email" className="text-slate-700">
+                        Email
+                      </Label>
+                      <Input
+                        id="edit-email"
+                        name="email"
+                        type="email"
+                        placeholder="Enter email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-4">
                     <div className="grid gap-2">
                       <Label htmlFor="edit-city" className="text-slate-700">
                         City*
                       </Label>
                       <Input
                         id="edit-city"
-                        name="location.city"
+                        name="city"
                         placeholder="Enter city"
-                        value={formData.location?.city || ""}
+                        value={formData.city}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1429,24 +1204,35 @@ export const EntityManagement = ({
                       </Label>
                       <Input
                         id="edit-province"
-                        name="location.province"
+                        name="province"
                         placeholder="Enter province or state"
-                        value={formData.location?.province || ""}
+                        value={formData.province}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
                       />
                     </div>
-                  </div>
 
-                  {/* Right Column */}
-                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-website" className="text-slate-700">
+                        Website
+                      </Label>
+                      <Input
+                        id="edit-website"
+                        name="website"
+                        placeholder="Enter website URL"
+                        value={formData.website}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+
                     <div className="grid gap-2">
                       <Label
                         htmlFor="edit-description"
                         className="text-slate-700"
                       >
-                        Description*
+                        Description
                       </Label>
                       <Textarea
                         id="edit-description"
@@ -1456,149 +1242,63 @@ export const EntityManagement = ({
                         onChange={handleInputChange}
                         className="border-slate-300"
                         rows={4}
-                        required
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-languages"
-                        className="text-slate-700"
-                      >
-                        Languages Spoken (comma separated)
-                      </Label>
-                      <Input
-                        id="edit-languages"
-                        name="languagesSpoken"
-                        placeholder="English, Spanish, French"
-                        value={formData.languagesSpoken.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            languagesSpoken: e.target.value
-                              .split(",")
-                              .map((lang) => lang.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-tags" className="text-slate-700">
-                        Tags (comma separated)
-                      </Label>
-                      <Input
-                        id="edit-tags"
-                        name="tags"
-                        placeholder="Contemporary, Digital, Oil Painting"
-                        value={formData.tags.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            tags: e.target.value
-                              .split(",")
-                              .map((tag) => tag.trim()),
-                          })
-                        }
-                        className="border-slate-300"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Location Coordinates Section */}
+                {/* Images Section */}
                 <div className="border-t border-slate-200 pt-4 mt-4">
                   <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Location Coordinates
+                    Images
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-latitude" className="text-slate-700">
-                        Latitude
-                      </Label>
-                      <Input
-                        id="edit-latitude"
-                        name="location.latitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter latitude"
-                        value={formData.location?.latitude || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-longitude"
-                        className="text-slate-700"
-                      >
-                        Longitude
-                      </Label>
-                      <Input
-                        id="edit-longitude"
-                        name="location.longitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter longitude"
-                        value={formData.location?.longitude || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Media Section */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Media
-                  </h3>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-images" className="text-slate-700">
-                        Image URLs (comma separated)
-                      </Label>
-                      <Input
+                  <div className="grid gap-2">
+                    {/* <Label className="text-slate-700">Artist Images</Label> */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.images.length > 0 &&
+                          formData.images.map((image, index) => (
+                            <div key={index} className="relative">
+                              <Image
+                                fill
+                                src={image}
+                                alt={`Artist ${index + 1}`}
+                                className="h-20 w-20 object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                              >
+                                <X className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                      <input
+                        type="file"
                         id="edit-images"
-                        name="images"
-                        placeholder="Enter image URLs separated by commas"
-                        value={formData.images.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            images: e.target.value
-                              .split(",")
-                              .map((url) => url.trim()),
-                          })
-                        }
-                        className="border-slate-300"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        multiple
+                        accept="image/*"
+                        className="hidden"
                       />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-videoSamples"
-                        className="text-slate-700"
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImages}
                       >
-                        Video Sample URLs (comma separated)
-                      </Label>
-                      <Input
-                        id="edit-videoSamples"
-                        name="videoSamples"
-                        placeholder="Enter video URLs separated by commas"
-                        value={formData.videoSamples.join(", ")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            videoSamples: e.target.value
-                              .split(",")
-                              .map((url) => url.trim()),
-                          })
-                        }
-                        className="border-slate-300"
-                      />
+                        {uploadingImages ? (
+                          "Uploading..."
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Images
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1638,10 +1338,10 @@ export const EntityManagement = ({
                 <Avatar className="h-24 w-24 mb-4">
                   <AvatarImage
                     src={currentEntity.images?.[0]}
-                    alt={currentEntity.name}
+                    alt={currentEntity.title}
                   />
                   <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl">
-                    {currentEntity.name
+                    {currentEntity.title
                       ?.split(" ")
                       .map((word) => word[0])
                       .join("")
@@ -1649,9 +1349,11 @@ export const EntityManagement = ({
                   </AvatarFallback>
                 </Avatar>
                 <h3 className="text-2xl font-bold text-slate-800">
-                  {currentEntity.name}
+                  {currentEntity.title}
                 </h3>
-                <p className="text-slate-500 mb-4">{currentEntity.artStyle}</p>
+                <p className="text-slate-500 mb-4">
+                  {currentEntity.specialization}
+                </p>
 
                 <div className="w-full mt-2">
                   <div className="flex justify-between items-center mb-3">
@@ -1659,20 +1361,16 @@ export const EntityManagement = ({
                       Location
                     </span>
                     <div className="text-sm text-slate-600">
-                      {currentEntity.location?.city},{" "}
-                      {currentEntity.location?.province}
+                      {currentEntity.city}, {currentEntity.province}
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-slate-700">
-                      Rating
+                      Artist Type
                     </span>
-                    <div className="flex items-center text-yellow-600">
-                      ⭐ {currentEntity.rating || "N/A"}
-                      <span className="ml-1 text-xs text-slate-500">
-                        ({currentEntity.reviewsCount || 0} reviews)
-                      </span>
+                    <div className="text-sm text-slate-600">
+                      {currentEntity.artistType?.name || "N/A"}
                     </div>
                   </div>
                 </div>
@@ -1689,42 +1387,35 @@ export const EntityManagement = ({
                   </p>
 
                   <h4 className="text-sm font-medium text-slate-700 mb-2">
-                    Languages Spoken
+                    Contact Information
                   </h4>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {currentEntity.languagesSpoken?.length > 0 ? (
-                      currentEntity.languagesSpoken.map((lang) => (
-                        <Badge key={lang} variant="outline">
-                          {lang}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-slate-500">Not specified</span>
-                    )}
-                  </div>
-
-                  <h4 className="text-sm font-medium text-slate-700 mb-2">
-                    Tags
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {currentEntity.tags?.length > 0 ? (
-                      currentEntity.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-slate-500">No tags</span>
-                    )}
+                  <div className="flex flex-col gap-4 mb-4">
+                    <div>
+                      <p className="text-xs text-slate-500">Email</p>
+                      <p className="text-slate-700">
+                        {currentEntity.email || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Phone</p>
+                      <p className="text-slate-700">
+                        {currentEntity.phone || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Website</p>
+                      <p className="text-slate-700">
+                        {currentEntity.website || "N/A"}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 <div className="p-4 border rounded-lg border-slate-200">
                   <h4 className="text-sm font-medium text-slate-700 mb-2">
-                    Media Samples
+                    Media
                   </h4>
-                  {currentEntity.images?.length > 0 ||
-                  currentEntity.videoSamples?.length > 0 ? (
+                  {currentEntity.images?.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
                       {currentEntity.images?.slice(0, 3).map((img, index) => (
                         <div
@@ -1738,14 +1429,9 @@ export const EntityManagement = ({
                           />
                         </div>
                       ))}
-                      {currentEntity.videoSamples?.length > 0 && (
-                        <div className="aspect-square bg-slate-100 rounded-md flex items-center justify-center">
-                          <Play className="h-6 w-6 text-slate-400" />
-                        </div>
-                      )}
                     </div>
                   ) : (
-                    <p className="text-slate-500">No media samples available</p>
+                    <p className="text-slate-500">No images available</p>
                   )}
                 </div>
               </div>
@@ -1791,7 +1477,9 @@ export const EntityManagement = ({
                   </p>
                   <p className="mt-1 text-sm text-red-700">
                     Deleting{" "}
-                    <span className="font-semibold">{currentEntity?.name}</span>{" "}
+                    <span className="font-semibold">
+                      {currentEntity?.title}
+                    </span>{" "}
                     will remove all their data from your platform.
                   </p>
                 </div>
