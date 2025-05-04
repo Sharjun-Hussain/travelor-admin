@@ -159,7 +159,7 @@ export const EntityManagement = ({
     vistaVerified: false,
     operatorName: "",
     pricePerKmUSD: "",
-    amenities: [],
+    amenities: "",
     reviews: {
       vistaReview: {
         rating: null,
@@ -215,7 +215,6 @@ export const EntityManagement = ({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
           },
           withCredentials: true,
         }

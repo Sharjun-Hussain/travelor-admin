@@ -159,7 +159,7 @@ const PageWrapper = () => {
 
   const updateFunction = async (updatedEntity) => {
     await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/local-artists`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/local-artists/${updatedEntity.id}`,
       updatedEntity,
       {
         withCredentials: true,

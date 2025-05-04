@@ -42,14 +42,13 @@ const PageWrapper = () => {
   };
 
   const updateFunction = async (updatedEntity) => {
+    alert(JSON.stringify(updatedEntity));
     // Simulating API call
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports/${updatedEntity.id}`,
       updatedEntity,
       {
-        headers: {
-          Authorization: `Bearer ${datafromlocalstorage.data.accessToken}`,
-        },
+        withCredentials: true,
       }
     );
     return updatedEntity;
