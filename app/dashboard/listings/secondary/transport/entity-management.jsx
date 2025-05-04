@@ -1865,9 +1865,9 @@ export const EntityManagement = ({
                         Amenities
                       </Label>
                       <MultiSelect
-                        defaultValue={formData.amenities.map(
-                          (amenity) => amenity.id
-                        )}
+                        // defaultValue={formData.amenities.map(
+                        //   (amenity) => amenity.id
+                        // )}
                         options={FetchedAmenities}
                         onValueChange={(selectedItems) => {
                           // selectedItems should be an array of the currently selected amenity IDs
