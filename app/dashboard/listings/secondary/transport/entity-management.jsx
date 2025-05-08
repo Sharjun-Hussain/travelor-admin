@@ -155,10 +155,10 @@ export const EntityManagement = ({
     id: "",
     title: "",
     images: [],
-    transportTypeId: "",
+    transportTypes: "",
     vistaVerified: false,
-    operatorName: "",
-    pricePerKmUSD: "",
+    serviceArea: "",
+    address: "",
     amenities: "",
     reviews: {
       vistaReview: {
@@ -171,19 +171,9 @@ export const EntityManagement = ({
     email: "",
     website: "",
     description: "",
-    departureCity: "",
-    arrivalCity: "",
-    latitude: null,
-    longitude: null,
-    onlineImages: [],
-    seatCount: null,
-    transportType: {
-      id: null,
-      language_code: "",
-      name: "",
-      isActive: null,
-    },
-    type: "Transport",
+    city: "",
+    district: "",
+    province: "",
   },
   defaultSort = { key: "name", direction: "asc" },
 }) => {
@@ -201,28 +191,12 @@ export const EntityManagement = ({
   const [uploadingImages, setUploadingImages] = useState(false);
   const fileInputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
-
-  const [FetchedAmenities, setFetchedAmenities] = useState([]);
   const [FetchedTransportTypes, setFetchedTransportTypes] = useState([]);
 
   const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
   console.log(datafromlocalstorage.data.accessToken);
 
   useEffect(() => {
-    const fetchAmenities = async () => {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/amenities`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-
-      setFetchedAmenities(response.data.data);
-    };
-
     const fetchTravelTypes = async () => {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-types`,
@@ -238,7 +212,6 @@ export const EntityManagement = ({
       setFetchedTransportTypes(response.data.data);
     };
 
-    fetchAmenities();
     fetchTravelTypes();
   }, []);
 
@@ -334,11 +307,11 @@ export const EntityManagement = ({
   // Filter and sort entities
   const filteredEntities = entities.filter((entity) => {
     const matchesSearch =
-      entity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entity.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (entity.country &&
-        entity.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      entity.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entity.website &&
+        entity.website.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (entity.city &&
         entity.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       Object.keys(entity).some(
@@ -428,19 +401,16 @@ export const EntityManagement = ({
 
     const newformdata = new FormData();
     newformdata.append("title", formData.title);
-    newformdata.append("transportTypeId", formData.transportTypeId);
-    newformdata.append("arrivalCity", formData.arrivalCity);
-    newformdata.append("departureCity", formData.departureCity);
+    newformdata.append("transportTypes", formData.transportTypes);
+    newformdata.append("address", formData.address);
+    newformdata.append("city", formData.city);
+    newformdata.append("district", formData.district);
+    newformdata.append("province", formData.province);
+    newformdata.append("serviceArea", formData.serviceArea);
     newformdata.append("description", formData.description);
     newformdata.append("email", formData.email);
-    newformdata.append("latitude", formData.latitude);
-    newformdata.append("longitude", formData.longitude);
-    newformdata.append("operatorName", formData.operatorName);
-    newformdata.append("pricePerKmUSD", formData.pricePerKmUSD);
-    // newformdata.append("vistaVerified", formData.vistaVerified);
     newformdata.append("website", formData.website);
     newformdata.append("phone", formData.phone);
-    newformdata.append("seatCount", formData.seatCount);
     newformdata.append("amenities", formData.amenities);
 
     selectedFiles.forEach((file) => {
@@ -1301,7 +1271,7 @@ export const EntityManagement = ({
                   <div className="space-y-4">
                     <div className="grid gap-2">
                       <Label htmlFor="title" className="text-slate-700">
-                        Transport Title*
+                        Agency Title*
                       </Label>
                       <Input
                         id="title"
@@ -1314,53 +1284,34 @@ export const EntityManagement = ({
                       />
                     </div>
 
-                    <div className="grid gap-2 ">
+                    <div className="grid gap-2">
                       <Label
                         htmlFor="transportTypeId"
                         className="text-slate-700"
                       >
-                        Transport Type*
+                        Transport Types
                       </Label>
-                      <Select
-                        value={formData.transportTypeId?.toString() || ""}
-                        onValueChange={(value) => {
-                          setFormData({
-                            ...formData,
-                            transportTypeId: Number(value), // storing the ID
-                          });
+                      <MultiSelect
+                        options={FetchedTransportTypes}
+                        onValueChange={(selectedItems) => {
+                          // selectedItems should be an array of the currently selected amenity IDs
+                          setFormData((prev) => ({
+                            ...prev,
+                            transportTypes: selectedItems, // This replaces the entire amenities array
+                          }));
                         }}
-                        required
-                      >
-                        <SelectTrigger className="border-slate-300 w-full">
-                          <SelectValue placeholder="Select transport type">
-                            {FetchedTransportTypes.find(
-                              (item) => item.id === formData.transportTypeId
-                            )?.name || "Select transport type"}
-                          </SelectValue>
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          {FetchedTransportTypes.map((type) => (
-                            <SelectItem
-                              key={type.id}
-                              value={type.id.toString()}
-                            >
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="operatorName" className="text-slate-700">
-                        Operator Name*
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        Service Area*
                       </Label>
                       <Input
-                        id="operatorName"
-                        name="operatorName"
-                        placeholder="Enter operator name"
-                        value={formData.operatorName}
+                        id="serviceArea"
+                        name="serviceArea"
+                        placeholder="Enter Service Area"
+                        value={formData.serviceArea || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1368,36 +1319,14 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="transportTypeId"
-                        className="text-slate-700"
-                      >
-                        Amenities
-                      </Label>
-                      <MultiSelect
-                        options={FetchedAmenities}
-                        onValueChange={(selectedItems) => {
-                          // selectedItems should be an array of the currently selected amenity IDs
-                          setFormData((prev) => ({
-                            ...prev,
-                            amenities: selectedItems, // This replaces the entire amenities array
-                          }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
-                        Price per Kilometer (USD)*
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        Address*
                       </Label>
                       <Input
-                        id="pricePerKmUSD"
-                        name="pricePerKmUSD"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Enter price per km"
-                        value={formData.pricePerKmUSD}
+                        id="Address"
+                        name="address"
+                        placeholder="Enter Address"
+                        value={formData.address || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1459,13 +1388,13 @@ export const EntityManagement = ({
                   <div className="space-y-4">
                     <div className="grid gap-2">
                       <Label htmlFor="departureCity" className="text-slate-700">
-                        Departure City*
+                        City*
                       </Label>
                       <Input
-                        id="departureCity"
-                        name="departureCity"
-                        placeholder="Enter departure city"
-                        value={formData.departureCity || ""}
+                        id="city"
+                        name="city"
+                        placeholder="Enter  city"
+                        value={formData.city || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1473,14 +1402,29 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="arrivalCity" className="text-slate-700">
-                        Arrival City*
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        District*
                       </Label>
                       <Input
-                        id="arrivalCity"
-                        name="arrivalCity"
-                        placeholder="Enter arrival city"
-                        value={formData.arrivalCity || ""}
+                        id="district"
+                        name="district"
+                        placeholder="Enter district"
+                        value={formData.district || ""}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        Province*
+                      </Label>
+                      <Input
+                        id="province"
+                        name="province"
+                        placeholder="Enter Province"
+                        value={formData.province || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1524,130 +1468,8 @@ export const EntityManagement = ({
                         rows={3}
                       />
                     </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
-                        Seat Count*
-                      </Label>
-                      <Input
-                        id="seatCount"
-                        name="seatCount"
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="Enter Number of seats"
-                        value={formData.seatCount}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300"
-                      />
-                    </div>
                   </div>
                 </div>
-
-                {/* Amenities Section */}
-                {/* <div className="border-t border-slate-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Amenities
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="airConditioned"
-                        checked={
-                          formData.amenities?.find(
-                            (a) => a.type === "Air Conditioned"
-                          )?.available || false
-                        }
-                        onCheckedChange={(checked) => {
-                          const amenities = [...(formData.amenities || [])];
-                          const index = amenities.findIndex(
-                            (a) => a.type === "Air Conditioned"
-                          );
-                          if (index >= 0) {
-                            amenities[index].available = checked;
-                          } else {
-                            amenities.push({
-                              type: "Air Conditioned",
-                              available: checked,
-                            });
-                          }
-                          setFormData({ ...formData, amenities });
-                        }}
-                      />
-                      <Label htmlFor="airConditioned">Air Conditioned</Label>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label
-                        htmlFor="passengerCapacity"
-                        className="text-slate-700"
-                      >
-                        Passenger Capacity
-                      </Label>
-                      <Input
-                        id="passengerCapacity"
-                        type="number"
-                        min="1"
-                        placeholder="Enter capacity"
-                        value={
-                          formData.amenities?.find(
-                            (a) => a.type === "Passenger Capacity"
-                          )?.value || ""
-                        }
-                        onChange={(e) => {
-                          const amenities = [...(formData.amenities || [])];
-                          const index = amenities.findIndex(
-                            (a) => a.type === "Passenger Capacity"
-                          );
-                          if (index >= 0) {
-                            amenities[index].value = e.target.value;
-                          } else {
-                            amenities.push({
-                              type: "Passenger Capacity",
-                              value: e.target.value,
-                            });
-                          }
-                          setFormData({ ...formData, amenities });
-                        }}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="luggageSpace" className="text-slate-700">
-                        Luggage Space (bags)
-                      </Label>
-                      <Input
-                        id="luggageSpace"
-                        type="number"
-                        min="0"
-                        placeholder="Enter luggage capacity"
-                        value={
-                          formData.amenities?.find(
-                            (a) => a.type === "Luggage Space"
-                          )?.value || ""
-                        }
-                        onChange={(e) => {
-                          const amenities = [...(formData.amenities || [])];
-                          const index = amenities.findIndex(
-                            (a) => a.type === "Luggage Space"
-                          );
-                          if (index >= 0) {
-                            amenities[index].value = e.target.value;
-                          } else {
-                            amenities.push({
-                              type: "Luggage Space",
-                              value: e.target.value,
-                            });
-                          }
-                          setFormData({ ...formData, amenities });
-                        }}
-                        className="border-slate-300"
-                      />
-                    </div>
-                  </div>
-                </div> */}
 
                 {/* Contact Details Section */}
                 <div className="border-t border-slate-200 pt-4 mt-4">
@@ -1697,46 +1519,6 @@ export const EntityManagement = ({
                         type="url"
                         placeholder="Enter website URL"
                         value={formData.website || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location Coordinates Section */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Location Coordinates
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="grid gap-2">
-                      <Label htmlFor="latitude" className="text-slate-700">
-                        Latitude
-                      </Label>
-                      <Input
-                        id="latitude"
-                        name="latitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter latitude"
-                        value={formData.latitude || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="longitude" className="text-slate-700">
-                        Longitude
-                      </Label>
-                      <Input
-                        id="longitude"
-                        name="longitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter longitude"
-                        value={formData.longitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
@@ -1791,7 +1573,7 @@ export const EntityManagement = ({
                   <div className="space-y-4">
                     <div className="grid gap-2">
                       <Label htmlFor="title" className="text-slate-700">
-                        Transport Title*
+                        Agency Title*
                       </Label>
                       <Input
                         id="title"
@@ -1804,53 +1586,34 @@ export const EntityManagement = ({
                       />
                     </div>
 
-                    <div className="grid gap-2 ">
+                    <div className="grid gap-2">
                       <Label
                         htmlFor="transportTypeId"
                         className="text-slate-700"
                       >
-                        Transport Type*
+                        Transport Types
                       </Label>
-                      <Select
-                        value={formData.transportTypeId?.toString() || ""}
-                        onValueChange={(value) => {
-                          setFormData({
-                            ...formData,
-                            transportTypeId: Number(value), // storing the ID
-                          });
+                      <MultiSelect
+                        options={FetchedTransportTypes}
+                        onValueChange={(selectedItems) => {
+                          // selectedItems should be an array of the currently selected amenity IDs
+                          setFormData((prev) => ({
+                            ...prev,
+                            transportTypes: selectedItems, // This replaces the entire amenities array
+                          }));
                         }}
-                        required
-                      >
-                        <SelectTrigger className="border-slate-300 w-full">
-                          <SelectValue placeholder="Select transport type">
-                            {FetchedTransportTypes.find(
-                              (item) => item.id === formData.transportTypeId
-                            )?.name || "Select transport type"}
-                          </SelectValue>
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          {FetchedTransportTypes.map((type) => (
-                            <SelectItem
-                              key={type.id}
-                              value={type.id.toString()}
-                            >
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="operatorName" className="text-slate-700">
-                        Operator Name*
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        Service Area*
                       </Label>
                       <Input
-                        id="operatorName"
-                        name="operatorName"
-                        placeholder="Enter operator name"
-                        value={formData.operatorName}
+                        id="serviceArea"
+                        name="serviceArea"
+                        placeholder="Enter Service Area"
+                        value={formData.serviceArea || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1858,39 +1621,14 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="transportTypeId"
-                        className="text-slate-700"
-                      >
-                        Amenities
-                      </Label>
-                      <MultiSelect
-                        // defaultValue={formData.amenities.map(
-                        //   (amenity) => amenity.id
-                        // )}
-                        options={FetchedAmenities}
-                        onValueChange={(selectedItems) => {
-                          // selectedItems should be an array of the currently selected amenity IDs
-                          setFormData((prev) => ({
-                            ...prev,
-                            amenities: selectedItems, // This replaces the entire amenities array
-                          }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
-                        Price per Kilometer (USD)*
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        Address*
                       </Label>
                       <Input
-                        id="pricePerKmUSD"
-                        name="pricePerKmUSD"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Enter price per km"
-                        value={formData.pricePerKmUSD}
+                        id="Address"
+                        name="address"
+                        placeholder="Enter Address"
+                        value={formData.address || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1906,7 +1644,7 @@ export const EntityManagement = ({
                           {formData.images.map((image, index) => (
                             <div key={index} className="relative">
                               <img
-                                src={image.imageUrl}
+                                src={image}
                                 alt={`Transport ${index}`}
                                 className="h-20 w-20 object-cover rounded-md"
                               />
@@ -1952,13 +1690,13 @@ export const EntityManagement = ({
                   <div className="space-y-4">
                     <div className="grid gap-2">
                       <Label htmlFor="departureCity" className="text-slate-700">
-                        Departure City*
+                        City*
                       </Label>
                       <Input
-                        id="departureCity"
-                        name="departureCity"
-                        placeholder="Enter departure city"
-                        value={formData.departureCity || ""}
+                        id="city"
+                        name="city"
+                        placeholder="Enter  city"
+                        value={formData.city || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -1966,14 +1704,29 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="arrivalCity" className="text-slate-700">
-                        Arrival City*
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        District*
                       </Label>
                       <Input
-                        id="arrivalCity"
-                        name="arrivalCity"
-                        placeholder="Enter arrival city"
-                        value={formData.arrivalCity || ""}
+                        id="district"
+                        name="district"
+                        placeholder="Enter district"
+                        value={formData.district || ""}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="departureCity" className="text-slate-700">
+                        Province*
+                      </Label>
+                      <Input
+                        id="province"
+                        name="province"
+                        placeholder="Enter Province"
+                        value={formData.province || ""}
                         onChange={handleInputChange}
                         required
                         className="border-slate-300"
@@ -2017,130 +1770,8 @@ export const EntityManagement = ({
                         rows={3}
                       />
                     </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="pricePerKmUSD" className="text-slate-700">
-                        Seat Count*
-                      </Label>
-                      <Input
-                        id="seatCount"
-                        name="seatCount"
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="Enter Number of seats"
-                        value={formData.seatCount}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300"
-                      />
-                    </div>
                   </div>
                 </div>
-
-                {/* Amenities Section */}
-                {/* <div className="border-t border-slate-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Amenities
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="airConditioned"
-                        checked={
-                          formData.amenities?.find(
-                            (a) => a.type === "Air Conditioned"
-                          )?.available || false
-                        }
-                        onCheckedChange={(checked) => {
-                          const amenities = [...(formData.amenities || [])];
-                          const index = amenities.findIndex(
-                            (a) => a.type === "Air Conditioned"
-                          );
-                          if (index >= 0) {
-                            amenities[index].available = checked;
-                          } else {
-                            amenities.push({
-                              type: "Air Conditioned",
-                              available: checked,
-                            });
-                          }
-                          setFormData({ ...formData, amenities });
-                        }}
-                      />
-                      <Label htmlFor="airConditioned">Air Conditioned</Label>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label
-                        htmlFor="passengerCapacity"
-                        className="text-slate-700"
-                      >
-                        Passenger Capacity
-                      </Label>
-                      <Input
-                        id="passengerCapacity"
-                        type="number"
-                        min="1"
-                        placeholder="Enter capacity"
-                        value={
-                          formData.amenities?.find(
-                            (a) => a.type === "Passenger Capacity"
-                          )?.value || ""
-                        }
-                        onChange={(e) => {
-                          const amenities = [...(formData.amenities || [])];
-                          const index = amenities.findIndex(
-                            (a) => a.type === "Passenger Capacity"
-                          );
-                          if (index >= 0) {
-                            amenities[index].value = e.target.value;
-                          } else {
-                            amenities.push({
-                              type: "Passenger Capacity",
-                              value: e.target.value,
-                            });
-                          }
-                          setFormData({ ...formData, amenities });
-                        }}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="luggageSpace" className="text-slate-700">
-                        Luggage Space (bags)
-                      </Label>
-                      <Input
-                        id="luggageSpace"
-                        type="number"
-                        min="0"
-                        placeholder="Enter luggage capacity"
-                        value={
-                          formData.amenities?.find(
-                            (a) => a.type === "Luggage Space"
-                          )?.value || ""
-                        }
-                        onChange={(e) => {
-                          const amenities = [...(formData.amenities || [])];
-                          const index = amenities.findIndex(
-                            (a) => a.type === "Luggage Space"
-                          );
-                          if (index >= 0) {
-                            amenities[index].value = e.target.value;
-                          } else {
-                            amenities.push({
-                              type: "Luggage Space",
-                              value: e.target.value,
-                            });
-                          }
-                          setFormData({ ...formData, amenities });
-                        }}
-                        className="border-slate-300"
-                      />
-                    </div>
-                  </div>
-                </div> */}
 
                 {/* Contact Details Section */}
                 <div className="border-t border-slate-200 pt-4 mt-4">
@@ -2190,46 +1821,6 @@ export const EntityManagement = ({
                         type="url"
                         placeholder="Enter website URL"
                         value={formData.website || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location Coordinates Section */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-slate-800 mb-4">
-                    Location Coordinates
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="grid gap-2">
-                      <Label htmlFor="latitude" className="text-slate-700">
-                        Latitude
-                      </Label>
-                      <Input
-                        id="latitude"
-                        name="latitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter latitude"
-                        value={formData.latitude || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="longitude" className="text-slate-700">
-                        Longitude
-                      </Label>
-                      <Input
-                        id="longitude"
-                        name="longitude"
-                        type="number"
-                        step="any"
-                        placeholder="Enter longitude"
-                        value={formData.longitude || ""}
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />

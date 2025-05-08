@@ -16,7 +16,7 @@ const PageWrapper = () => {
 
   const fetchFunction = async () => {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-agencies`,
       {
         headers: {
           Authorization: `Bearer ${AccessToken}`,
@@ -29,7 +29,7 @@ const PageWrapper = () => {
 
   const addFunction = async (newEntity) => {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-agencies`,
       newEntity,
       {
         headers: {
@@ -45,7 +45,7 @@ const PageWrapper = () => {
     alert(JSON.stringify(updatedEntity));
     // Simulating API call
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports/${updatedEntity.id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-agencies/${updatedEntity.id}`,
       updatedEntity,
       {
         withCredentials: true,
@@ -57,7 +57,7 @@ const PageWrapper = () => {
   const deletFucntion = async (id) => {
     // Simulating API call
     const response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transports/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-agencies/${id}`,
       {
         withCredentials: true,
       }

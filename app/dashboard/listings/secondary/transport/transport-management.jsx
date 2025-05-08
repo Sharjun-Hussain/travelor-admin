@@ -47,28 +47,36 @@ const defaultColumns = [
     ),
   },
   {
-    key: "operatorName",
-    label: "Operator",
+    key: "location",
+    label: "Location",
     visible: true,
     sortable: true,
     render: (transport) => (
-      <div
-        title={transport.operatorName}
-        className="text-slate-700 truncate max-w-[150px]"
-      >
-        {transport.operatorName}
+      <div className="flex flex-col">
+        <div
+          title={transport.address}
+          className="text-slate-700 truncate max-w-[150px]"
+        >
+          {transport.address} - {transport.city}
+        </div>
+        <div
+          title={transport.district - transport.province}
+          className="text-slate-700 truncate max-w-[150px]"
+        >
+          {transport.district} - {transport.province}
+        </div>
       </div>
     ),
   },
-  {
-    key: "pricePerKmUSD",
-    label: "Price/km",
-    visible: true,
-    sortable: true,
-    render: (transport) => (
-      <div className="text-slate-700">${transport.pricePerKmUSD}</div>
-    ),
-  },
+  // {
+  //   key: "pricePerKmUSD",
+  //   label: "Price/km",
+  //   visible: true,
+  //   sortable: true,
+  //   render: (transport) => (
+  //     <div className="text-slate-700">${transport.pricePerKmUSD}</div>
+  //   ),
+  // },
   {
     key: "vistaVerified",
     label: "Verified",
