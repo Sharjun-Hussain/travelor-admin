@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -147,6 +147,7 @@ export const EntityManagement = ({
     name: "",
     profileImage: "",
     bio: "",
+    images:[],
     languagesSpoken: [],
     licenseId: "",
     licenseExpiry: "",
@@ -198,6 +199,9 @@ export const EntityManagement = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const queryClient = useQueryClient();
 
@@ -406,6 +410,41 @@ export const EntityManagement = ({
     setIsDeleteDialogOpen(true);
   };
 
+    const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploadingImages(true);
+    setSelectedFiles(files);
+
+    // Create preview URLs for the selected files
+    const previewUrls = files.map((file) => URL.createObjectURL(file));
+
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...previewUrls],
+    }));
+
+    setUploadingImages(false);
+  };
+
+  const removeImage = (index) => {
+    setFormData((prev) => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
+    });
+
+    // Also remove from selectedFiles if it's a new file
+    if (index >= formData.images.length - selectedFiles.length) {
+      const newSelectedFiles = [...selectedFiles];
+      newSelectedFiles.splice(
+        index - (formData.images.length - selectedFiles.length),
+        1
+      );
+      setSelectedFiles(newSelectedFiles);
+    }
+  };
   if (isLoading) {
     return (
       <div className="container items-center mx-auto py-8 px-4">
@@ -1159,17 +1198,51 @@ export const EntityManagement = ({
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="profileImage" className="text-slate-700">
-                      Profile Image URL
-                    </Label>
-                    <Input
-                      id="profileImage"
-                      name="profileImage"
-                      placeholder="Enter image URL"
-                      value={formData.profileImage || ""}
-                      onChange={handleInputChange}
-                      className="border-slate-300"
-                    />
+                    <Label className="text-slate-700">Gallery Images</Label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image}
+                              alt={`Artist ${index + 1}`}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
+                        id="images"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImages}
+                      >
+                        {uploadingImages ? (
+                          "Uploading..."
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Images
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid gap-2">
@@ -1420,7 +1493,7 @@ export const EntityManagement = ({
                         })
                       }
                     >
-                      <SelectTrigger className="border-slate-300">
+                      <SelectTrigger className="border-slate-300 w-full">
                         <SelectValue placeholder="Select verification status" />
                       </SelectTrigger>
                       <SelectContent>

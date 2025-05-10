@@ -1176,7 +1176,7 @@ export const EntityManagement = ({
                         }
                         required
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1247,7 +1247,7 @@ export const EntityManagement = ({
                         }
                         required
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1372,15 +1372,15 @@ export const EntityManagement = ({
               })
             ) : (
               <form onSubmit={handleUpdateEntity}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                   {/* Left Column */}
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-name" className="text-slate-700">
+                      <Label htmlFor="name" className="text-slate-700">
                         Bazaar Name*
                       </Label>
                       <Input
-                        id="edit-name"
+                        id="name"
                         name="title"
                         placeholder="Enter bazaar name"
                         value={formData.title}
@@ -1391,7 +1391,7 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-category" className="text-slate-700">
+                      <Label htmlFor="category" className="text-slate-700">
                         Category*
                       </Label>
                       <Select
@@ -1404,7 +1404,7 @@ export const EntityManagement = ({
                         }
                         required
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1420,11 +1420,11 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-images" className="text-slate-700">
+                      <Label htmlFor="images" className="text-slate-700">
                         Image URLs (comma separated)
                       </Label>
                       <Input
-                        id="edit-images"
+                        id="images"
                         name="images"
                         placeholder="Enter image URLs separated by commas"
                         value={formData.images?.join(", ") || ""}
@@ -1444,11 +1444,11 @@ export const EntityManagement = ({
                   {/* Right Column */}
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-city" className="text-slate-700">
+                      <Label htmlFor="city" className="text-slate-700">
                         City*
                       </Label>
                       <Input
-                        id="edit-city"
+                        id="city"
                         name="location.city"
                         placeholder="Enter city"
                         value={formData.location?.city || ""}
@@ -1459,7 +1459,7 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-province" className="text-slate-700">
+                      <Label htmlFor="province" className="text-slate-700">
                         Province*
                       </Label>
                       <Select
@@ -1475,7 +1475,7 @@ export const EntityManagement = ({
                         }
                         required
                       >
-                        <SelectTrigger className="border-slate-300">
+                        <SelectTrigger className="border-slate-300 w-full">
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1499,14 +1499,11 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-productTypes"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="productTypes" className="text-slate-700">
                         Product Types (comma separated)
                       </Label>
                       <Input
-                        id="edit-productTypes"
+                        id="productTypes"
                         name="productTypes"
                         placeholder="Enter product types separated by commas"
                         value={formData.productTypes?.join(", ") || ""}
@@ -1531,14 +1528,11 @@ export const EntityManagement = ({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-contactPhone"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="contactPhone" className="text-slate-700">
                         Phone Number
                       </Label>
                       <Input
-                        id="edit-contactPhone"
+                        id="contactPhone"
                         name="contactDetails.phone"
                         placeholder="Enter phone number"
                         value={formData.contactDetails?.phone || ""}
@@ -1548,14 +1542,11 @@ export const EntityManagement = ({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label
-                        htmlFor="edit-contactEmail"
-                        className="text-slate-700"
-                      >
+                      <Label htmlFor="contactEmail" className="text-slate-700">
                         Email
                       </Label>
                       <Input
-                        id="edit-contactEmail"
+                        id="contactEmail"
                         name="contactDetails.email"
                         type="email"
                         placeholder="Enter email"

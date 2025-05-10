@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -78,6 +78,7 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { exportToExcel } from "@/lib/utils";
+import { DateTimePicker } from "@/components/date-time-picker";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -201,6 +202,9 @@ export const EntityManagement = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const queryClient = useQueryClient();
 
@@ -407,6 +411,42 @@ export const EntityManagement = ({
   const openDeleteDialog = (entity) => {
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
+  };
+
+    const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploadingImages(true);
+    setSelectedFiles(files);
+
+    // Create preview URLs for the selected files
+    const previewUrls = files.map((file) => URL.createObjectURL(file));
+
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...previewUrls],
+    }));
+
+    setUploadingImages(false);
+  };
+
+  const removeImage = (index) => {
+    setFormData((prev) => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
+    });
+
+    // Also remove from selectedFiles if it's a new file
+    if (index >= formData.images.length - selectedFiles.length) {
+      const newSelectedFiles = [...selectedFiles];
+      newSelectedFiles.splice(
+        index - (formData.images.length - selectedFiles.length),
+        1
+      );
+      setSelectedFiles(newSelectedFiles);
+    }
   };
 
   if (isLoading) {
@@ -1173,7 +1213,7 @@ export const EntityManagement = ({
                       }
                       required
                     >
-                      <SelectTrigger className="border-slate-300">
+                      <SelectTrigger className="border-slate-300 w-full">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1208,30 +1248,6 @@ export const EntityManagement = ({
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="images" className="text-slate-700">
-                      Image URLs (comma separated)
-                    </Label>
-                    <Input
-                      id="images"
-                      name="images"
-                      placeholder="Enter image URLs separated by commas"
-                      value={formData.images?.join(", ") || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          images: e.target.value
-                            .split(",")
-                            .map((url) => url.trim()),
-                        })
-                      }
-                      className="border-slate-300"
-                    />
-                  </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <div className="grid gap-2">
                     <Label htmlFor="venue" className="text-slate-700">
                       Venue*
                     </Label>
@@ -1245,6 +1261,59 @@ export const EntityManagement = ({
                       className="border-slate-300"
                     />
                   </div>
+
+                 <div className="grid gap-2">
+                    <Label className="text-slate-700">Upload Images</Label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image}
+                              alt={`Artist ${index + 1}`}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
+                        id="images"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImages}
+                      >
+                        {uploadingImages ? (
+                          "Uploading..."
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Images
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  
 
                   <div className="grid gap-2">
                     <Label htmlFor="city" className="text-slate-700">
@@ -1278,7 +1347,7 @@ export const EntityManagement = ({
                       }
                       required
                     >
-                      <SelectTrigger className="border-slate-300">
+                      <SelectTrigger className="border-slate-300 w-full">
                         <SelectValue placeholder="Select province" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1305,15 +1374,7 @@ export const EntityManagement = ({
                     <Label htmlFor="date" className="text-slate-700">
                       Date*
                     </Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={formData.date || ""}
-                      onChange={handleInputChange}
-                      required
-                      className="border-slate-300"
-                    />
+                   <DateTimePicker />
                   </div>
 
                   <div className="grid gap-2">
@@ -1348,7 +1409,7 @@ export const EntityManagement = ({
               </div>
 
               {/* Additional Details Section */}
-              <div className="border-t border-slate-200 pt-4 mt-4">
+              {/* <div className="border-t border-slate-200 pt-4 mt-4">
                 <h3 className="text-lg font-medium text-slate-800 mb-4">
                   Additional Details
                 </h3>
@@ -1444,7 +1505,7 @@ export const EntityManagement = ({
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Organizer Section */}
               <div className="border-t border-slate-200 pt-4 mt-4">
@@ -1552,7 +1613,7 @@ export const EntityManagement = ({
               <DialogDescription>Update event information</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleUpdateEntity}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                 {/* Left Column */}
                 <div className="space-y-4">
                   <div className="grid gap-2">
@@ -1584,7 +1645,7 @@ export const EntityManagement = ({
                       }
                       required
                     >
-                      <SelectTrigger className="border-slate-300">
+                      <SelectTrigger className="border-slate-300 w-full">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1619,30 +1680,6 @@ export const EntityManagement = ({
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="images" className="text-slate-700">
-                      Image URLs (comma separated)
-                    </Label>
-                    <Input
-                      id="images"
-                      name="images"
-                      placeholder="Enter image URLs separated by commas"
-                      value={formData.images?.join(", ") || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          images: e.target.value
-                            .split(",")
-                            .map((url) => url.trim()),
-                        })
-                      }
-                      className="border-slate-300"
-                    />
-                  </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <div className="grid gap-2">
                     <Label htmlFor="venue" className="text-slate-700">
                       Venue*
                     </Label>
@@ -1656,6 +1693,59 @@ export const EntityManagement = ({
                       className="border-slate-300"
                     />
                   </div>
+
+                 <div className="grid gap-2">
+                    <Label className="text-slate-700">Upload Images</Label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image}
+                              alt={`Artist ${index + 1}`}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
+                        id="images"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImages}
+                      >
+                        {uploadingImages ? (
+                          "Uploading..."
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Images
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  
 
                   <div className="grid gap-2">
                     <Label htmlFor="city" className="text-slate-700">
@@ -1689,7 +1779,7 @@ export const EntityManagement = ({
                       }
                       required
                     >
-                      <SelectTrigger className="border-slate-300">
+                      <SelectTrigger className="border-slate-300 w-full">
                         <SelectValue placeholder="Select province" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1716,15 +1806,7 @@ export const EntityManagement = ({
                     <Label htmlFor="date" className="text-slate-700">
                       Date*
                     </Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={formData.date || ""}
-                      onChange={handleInputChange}
-                      required
-                      className="border-slate-300"
-                    />
+                   <DateTimePicker />
                   </div>
 
                   <div className="grid gap-2">
@@ -1759,7 +1841,7 @@ export const EntityManagement = ({
               </div>
 
               {/* Additional Details Section */}
-              <div className="border-t border-slate-200 pt-4 mt-4">
+              {/* <div className="border-t border-slate-200 pt-4 mt-4">
                 <h3 className="text-lg font-medium text-slate-800 mb-4">
                   Additional Details
                 </h3>
@@ -1855,7 +1937,7 @@ export const EntityManagement = ({
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Organizer Section */}
               <div className="border-t border-slate-200 pt-4 mt-4">
@@ -1925,6 +2007,7 @@ export const EntityManagement = ({
                   </div>
                 </div>
               </div>
+
 
               <DialogFooter className="mt-6">
                 <Button
