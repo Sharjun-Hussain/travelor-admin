@@ -187,7 +187,7 @@ const data = {
         },
         {
           title: "Amenities",
-          url: "/admin/hotel-and-aprtments/amenities",
+          url: "/dashboard/listings/main/hotel-and-apartment/amenities",
         },
         {
           title: "Manage Rooms",
@@ -210,7 +210,7 @@ const data = {
         },
         {
           title: "Amenities",
-          url: "/admin/rooms/amenities",
+          url: "/dashboard/listings/main/homestay/amenities",
         },
       ],
     },
@@ -229,7 +229,7 @@ const data = {
     {
       title: "Food & Beverage",
       icon: Vegan,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/secondary/food-and-beverages",
     },
     {
       title: "Events",
