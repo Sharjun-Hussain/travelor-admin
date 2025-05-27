@@ -19,6 +19,7 @@ import {
   HomeIcon,
   HotelIcon,
   IceCream2Icon,
+  LampCeiling,
   LayoutDashboardIcon,
   MapPinIcon,
   MessageSquareIcon,
@@ -538,8 +539,13 @@ const data = {
   hostbookingitems: [
     {
       title: "Booking Calendar",
-      url: "/booking-calender",
+      url: "/dashboard/Booking-calender",
       icon: LayoutDashboardIcon,
+    },
+    {
+      title: "Amenties",
+      url: "/dashboard/amenities",
+      icon: LampCeiling,
     },
   ],
   navusers: [

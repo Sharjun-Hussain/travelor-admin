@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -23,11 +23,6 @@ import {
   Calendar,
   Star,
   MapPin,
-  Hotel,
-  Home,
-  Phone,
-  Globe,
-  X,
 } from "lucide-react";
 import {
   Table,
@@ -137,27 +132,12 @@ export const EntityManagement = ({
   editForm,
   viewDetails,
   initialFormData = {
-    propertyType: "hotel",
-    title: "",
-    address: "",
-    city: "",
-    district: "",
-    province: "",
-    country: "Sri Lanka",
-    postalCode: "",
-    cancellationPolicy: "moderate",
-    checkInTime: "14:00",
-    checkOutTime: "12:00",
-    description: "",
+    name: "",
+    slug: "amenity",
+    icon: "icon",
+    category: "category",
+    language_code: "en",
     isActive: true,
-    vistaVerified: false,
-    phone: "",
-    email: "",
-    website: "",
-    availabilityStatus: "available",
-    approvalStatus: "pending",
-    amenities: [],
-    images: [],
   },
   defaultSort = { key: "name", direction: "asc" },
 }) => {
@@ -172,10 +152,8 @@ export const EntityManagement = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+
   const queryClient = useQueryClient();
-  const [uploadingImages, setUploadingImages] = useState(false);
-  const fileInputRef = useRef(null);
-  const [selectedFiles, setSelectedFiles] = useState([]);
 
   // Query hooks
   const {
@@ -256,17 +234,20 @@ export const EntityManagement = ({
   // Filter and sort entities
   const filteredEntities = entities.filter((entity) => {
     const matchesSearch =
-      entity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entity.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entity.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entity.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entity.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      entity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entity.country &&
+        entity.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (entity.city &&
+        entity.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      Object.keys(entity).some(
+        (key) =>
+          typeof entity[key] === "string" &&
+          entity[key].toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
     const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && entity.isActive) ||
-      (statusFilter === "pending" && entity.approvalStatus === "pending") ||
-      (statusFilter === "inactive" && !entity.isActive);
+      statusFilter === "all" || entity.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -321,6 +302,7 @@ export const EntityManagement = ({
   const handleAddEntity = (e) => {
     e.preventDefault();
     if (addEntity) {
+
       addMutation.mutate(formData);
     }
   };
@@ -358,57 +340,6 @@ export const EntityManagement = ({
   const openDeleteDialog = (entity) => {
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
-  };
-
-  const handleImageUpload = async (e) => {
-    console.log("File input ref:", fileInputRef.current);
-    console.log("Files:", fileInputRef.current?.files);
-    console.log("File count:", fileInputRef.current?.files?.length);
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    console.log("Selected files:", files);
-    setUploadingImages(true);
-
-    setSelectedFiles(files);
-
-    try {
-      const uploadedUrls = await Promise.all(
-        files.map((file) => {
-          return new Promise((resolve) => {
-            // Simulate upload delay
-            setTimeout(() => {
-              const url = URL.createObjectURL(file);
-              resolve(url);
-            }, 1000);
-          });
-        })
-      );
-
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls],
-      }));
-      // toast.success("Images uploaded successfully");
-    } catch (error) {
-      toast.error("Failed to upload images", {
-        description: error.message || "Please try again",
-      });
-    } finally {
-      setUploadingImages(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const removeImage = (index) => {
-    setFormData((prev) => {
-      const newImages = [...prev.images];
-      newImages.splice(index, 1);
-      return { ...prev, images: newImages };
-    });
   };
 
   if (isLoading) {
@@ -1116,13 +1047,14 @@ export const EntityManagement = ({
       {/* Add Activity Dialog */}
       {addEntity && (
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-xl">Add New Property</DialogTitle>
+              <DialogTitle className="text-xl">Add New Amenity</DialogTitle>
               <DialogDescription>
-                Add a new property for your platform
+                Create a new amenity (e.g. Free Parking, Fast Wi-Fi)
               </DialogDescription>
             </DialogHeader>
+
             {createForm ? (
               React.cloneElement(createForm, {
                 formData,
@@ -1133,269 +1065,104 @@ export const EntityManagement = ({
               })
             ) : (
               <form onSubmit={handleAddEntity}>
-                <ScrollArea className="pr-4">
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="propertyType">Property Type</Label>
-                        <Select
-                          value={formData.propertyType}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, propertyType: value })
-                          }
-                        >
-                          <SelectTrigger className="border-slate-300 w-full">
-                            <SelectValue placeholder="Select property type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="hotel">
-                              <div className="flex items-center">
-                                <Hotel className="h-4 w-4 mr-2" /> Hotel
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="apartment">
-                              <div className="flex items-center">
-                                <Home className="h-4 w-4 mr-2" /> Apartment
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="title">Property Name</Label>
-                        <Input
-                          id="title"
-                          name="title"
-                          placeholder="Enter property name"
-                          value={formData.title}
-                          onChange={handleInputChange}
-                          required
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          placeholder="Enter city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          required
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="district">District</Label>
-                        <Input
-                          id="district"
-                          name="district"
-                          placeholder="Enter district"
-                          value={formData.district}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="province">Province</Label>
-                        <Input
-                          id="province"
-                          name="province"
-                          placeholder="Enter province"
-                          value={formData.province}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="address">Full Address</Label>
-                      <Input
-                        id="address"
-                        name="address"
-                        placeholder="Enter full address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Contact Phone</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          placeholder="Enter phone number"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="email">Contact Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          placeholder="Enter email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="website">Website (optional)</Label>
-                      <Input
-                        id="website"
-                        name="website"
-                        placeholder="Enter website URL"
-                        type="url"
-                        value={formData.website || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="checkInTime">Check-in Time</Label>
-                        <Input
-                          id="checkInTime"
-                          name="checkInTime"
-                          type="time"
-                          value={formData.checkInTime}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="checkOutTime">Check-out Time</Label>
-                        <Input
-                          id="checkOutTime"
-                          name="checkOutTime"
-                          type="time"
-                          value={formData.checkOutTime}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">Description</Label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        placeholder="Enter property description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows={3}
-                        className="flex h-20 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="vistaVerified">Verification Status</Label>
-                        <Select
-                          value={formData.vistaVerified ? "true" : "false"}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              vistaVerified: value === "true",
-                            })
-                          }
-                        >
-                          <SelectTrigger className="border-slate-300 w-full">
-                            <SelectValue placeholder="Select verification status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Verified</SelectItem>
-                            <SelectItem value="false">Not Verified</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="isActive">Listing Status</Label>
-                        <Select
-                          value={formData.isActive ? "true" : "false"}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              isActive: value === "true",
-                            })
-                          }
-                        >
-                          <SelectTrigger className="border-slate-300 w-full">
-                            <SelectValue placeholder="Select listing status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Active</SelectItem>
-                            <SelectItem value="false">Inactive</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="images" className="text-slate-700">
-                        Images
-                      </Label>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap gap-2">
-                          {formData.images.map((image, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={image}
-                                alt={`Transport ${index}`}
-                                className="h-20 w-20 object-cover rounded-md"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeImage(index)}
-                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
-                              >
-                                <X className="h-3 w-3 text-white" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <input
-                          type="file"
-                          id="images"
-                          ref={fileInputRef}
-                          onChange={handleImageUpload}
-                          multiple
-                          accept="image/*"
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingImages}
-                        >
-                          {uploadingImages ? (
-                            "Uploading..."
-                          ) : (
-                            <>
-                              <Upload className="h-4 w-4 mr-2" />
-                              Upload Images
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name" className="text-slate-700">
+                      Feature Name
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Enter amenity name"
+                      value={formData.name || ""}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
                   </div>
-                </ScrollArea>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="slug" className="text-slate-700">
+                      Slug
+                    </Label>
+                    <Input
+                      disabled
+                      id="slug"
+                      name="slug"
+                      placeholder="e.g. free-parking"
+                      value={formData.name.toLowerCase() || ""}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
+                  </div>
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="language_code" className="text-slate-700">
+                      Language Code
+                    </Label>
+                    <Input
+                      id="language_code"
+                      name="language_code"
+                      placeholder="e.g. en"
+                      value={formData.language_code || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="icon" className="text-slate-700">
+                      Icon (URL or Emoji)
+                    </Label>
+                    <Input
+                      id="icon"
+                      name="icon"
+                      placeholder="Optional icon URL or emoji"
+                      value={formData.icon || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="category" className="text-slate-700">
+                      Category
+                    </Label>
+                    <Input
+                      id="category"
+                      name="category"
+                      placeholder="Optional category"
+                      value={formData.category || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="isActive" className="text-slate-700">
+                      Active Status
+                    </Label>
+                    <Select
+                      value={formData.isActive ? "true" : "false"}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isActive: value === "true",
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="border-slate-300 w-full">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Active</SelectItem>
+                        <SelectItem value="false">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <DialogFooter>
                   <Button
                     type="button"
@@ -1409,7 +1176,7 @@ export const EntityManagement = ({
                     disabled={addMutation.isPending}
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                   >
-                    {addMutation.isPending ? "Adding..." : "Add Property"}
+                    {addMutation.isPending ? "Adding..." : "Add Amenity"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -1418,13 +1185,15 @@ export const EntityManagement = ({
         </Dialog>
       )}
 
+
+
       {/* Edit Activity Dialog */}
       {updateEntity && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-xl">Edit Activity</DialogTitle>
-              <DialogDescription>Update activity information</DialogDescription>
+              <DialogTitle className="text-xl">Edit Amenity</DialogTitle>
+              <DialogDescription>Update amenity information</DialogDescription>
             </DialogHeader>
             {editForm ? (
               React.cloneElement(editForm, {
@@ -1435,284 +1204,117 @@ export const EntityManagement = ({
                 isLoading: updateMutation.isPending,
               })
             ) : (
-              <form onSubmit={handleAddEntity}>
-                <ScrollArea className="pr-4">
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="propertyType">Property Type</Label>
-                        <Select
-                          value={formData.propertyType}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, propertyType: value })
-                          }
-                        >
-                          <SelectTrigger className="border-slate-300 w-full">
-                            <SelectValue placeholder="Select property type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="hotel">
-                              <div className="flex items-center">
-                                <Hotel className="h-4 w-4 mr-2" /> Hotel
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="apartment">
-                              <div className="flex items-center">
-                                <Home className="h-4 w-4 mr-2" /> Apartment
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="title">Property Name</Label>
-                        <Input
-                          id="title"
-                          name="title"
-                          placeholder="Enter property name"
-                          value={formData.title}
-                          onChange={handleInputChange}
-                          required
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          placeholder="Enter city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          required
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="district">District</Label>
-                        <Input
-                          id="district"
-                          name="district"
-                          placeholder="Enter district"
-                          value={formData.district}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="province">Province</Label>
-                        <Input
-                          id="province"
-                          name="province"
-                          placeholder="Enter province"
-                          value={formData.province}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="address">Full Address</Label>
-                      <Input
-                        id="address"
-                        name="address"
-                        placeholder="Enter full address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Contact Phone</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          placeholder="Enter phone number"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="email">Contact Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          placeholder="Enter email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="website">Website (optional)</Label>
-                      <Input
-                        id="website"
-                        name="website"
-                        placeholder="Enter website URL"
-                        type="url"
-                        value={formData.website || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="checkInTime">Check-in Time</Label>
-                        <Input
-                          id="checkInTime"
-                          name="checkInTime"
-                          type="time"
-                          value={formData.checkInTime}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="checkOutTime">Check-out Time</Label>
-                        <Input
-                          id="checkOutTime"
-                          name="checkOutTime"
-                          type="time"
-                          value={formData.checkOutTime}
-                          onChange={handleInputChange}
-                          className="border-slate-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">Description</Label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        placeholder="Enter property description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows={3}
-                        className="flex h-20 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="vistaVerified">Verification Status</Label>
-                        <Select
-                          value={formData.vistaVerified ? "true" : "false"}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              vistaVerified: value === "true",
-                            })
-                          }
-                        >
-                          <SelectTrigger className="border-slate-300 w-full">
-                            <SelectValue placeholder="Select verification status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Verified</SelectItem>
-                            <SelectItem value="false">Not Verified</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="isActive">Listing Status</Label>
-                        <Select
-                          value={formData.isActive ? "true" : "false"}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              isActive: value === "true",
-                            })
-                          }
-                        >
-                          <SelectTrigger className="border-slate-300 w-full">
-                            <SelectValue placeholder="Select listing status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Active</SelectItem>
-                            <SelectItem value="false">Inactive</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="images" className="text-slate-700">
-                        Images
-                      </Label>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap gap-2">
-                          {formData.images.map((image, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={image}
-                                alt={`Transport ${index}`}
-                                className="h-20 w-20 object-cover rounded-md"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeImage(index)}
-                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
-                              >
-                                <X className="h-3 w-3 text-white" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <input
-                          type="file"
-                          id="images"
-                          ref={fileInputRef}
-                          onChange={handleImageUpload}
-                          multiple
-                          accept="image/*"
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingImages}
-                        >
-                          {uploadingImages ? (
-                            "Uploading..."
-                          ) : (
-                            <>
-                              <Upload className="h-4 w-4 mr-2" />
-                              Upload Images
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+              <form onSubmit={handleUpdateEntity}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name" className="text-slate-700">
+                      Feature Name
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Enter feature name"
+                      value={formData.name || ""}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
                   </div>
-                </ScrollArea>
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="slug" className="text-slate-700">
+                      Slug
+                    </Label>
+                    <Input
+                      id="slug"
+                      name="slug"
+                      placeholder="e.g. free-parking"
+                      value={formData.slug || ""}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="language_code" className="text-slate-700">
+                      Language Code
+                    </Label>
+                    <Input
+                      id="language_code"
+                      name="language_code"
+                      placeholder="e.g. en"
+                      value={formData.language_code || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="icon" className="text-slate-700">
+                      Icon (URL or Emoji)
+                    </Label>
+                    <Input
+                      id="icon"
+                      name="icon"
+                      placeholder="Optional icon URL or emoji"
+                      value={formData.icon || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  {/* <div className="grid gap-2">
+                    <Label htmlFor="category" className="text-slate-700">
+                      Category
+                    </Label>
+                    <Input
+                      id="category"
+                      name="category"
+                      placeholder="Optional category"
+                      value={formData.category || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div> */}
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="isActive" className="text-slate-700">
+                      Active Status
+                    </Label>
+                    <Select
+                      value={formData.isActive ? "true" : "false"}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isActive: value === "true",
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="border-slate-300 w-full">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Active</SelectItem>
+                        <SelectItem value="false">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <DialogFooter>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsAddDialogOpen(false)}
+                    onClick={() => setIsEditDialogOpen(false)}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={addMutation.isPending}
+                    disabled={updateMutation.isPending}
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                   >
-                    {updateMutation.isPending ? "Updating..." : "Update Property"}
+                    {updateMutation.isPending ? "Updating..." : "Save Changes"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -1721,16 +1323,14 @@ export const EntityManagement = ({
         </Dialog>
       )}
 
-      {/* View Property Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+      {/* View Activity Dialog */}
+      {/* <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl">
-              {currentEntity?.title} Details
-            </DialogTitle>
+            <DialogTitle className="text-xl">Activity Details</DialogTitle>
           </DialogHeader>
           {currentEntity && (
-            <ScrollArea className="max-h-[70vh]">
+            <ScrollArea className="max-h-[60vh]">
               {viewDetails ? (
                 viewDetails(currentEntity)
               ) : (
@@ -1738,119 +1338,82 @@ export const EntityManagement = ({
                   <div className="flex flex-col items-center pb-4 mb-4 border-b border-slate-200">
                     <Avatar className="h-20 w-20 mb-3">
                       <AvatarImage
-                        src={currentEntity.images?.[0]?.imageUrl}
+                        src={currentEntity.images?.[0]}
                         alt={currentEntity.title}
                       />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xl">
-                        {currentEntity.propertyType === "hotel" ? (
-                          <Hotel className="h-6 w-6" />
-                        ) : (
-                          <Home className="h-6 w-6" />
-                        )}
+                      <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xl">
+                        {currentEntity.title
+                          ?.split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <h3 className="text-xl font-bold text-slate-800">
                       {currentEntity.title}
                     </h3>
-                    <p className="text-slate-500 capitalize">
-                      {currentEntity.propertyType} • {currentEntity.district}
-                    </p>
+                    <p className="text-slate-500">{currentEntity.type}</p>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-700 mb-1">
-                          <MapPin className="inline h-4 w-4 mr-1 text-slate-400" />
-                          Location
-                        </h4>
-                        <p className="text-slate-600">
-                          {currentEntity.city}, {currentEntity.district}
-                          <br />
-                          {currentEntity.address}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-700 mb-1">
-                          <Calendar className="inline h-4 w-4 mr-1 text-slate-400" />
-                          Check-in/out
-                        </h4>
-                        <p className="text-slate-600">
-                          {currentEntity.checkInTime} / {currentEntity.checkOutTime}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-700 mb-1">
-                          <Phone className="inline h-4 w-4 mr-1 text-slate-400" />
-                          Contact
-                        </h4>
-                        <p className="text-slate-600">
-                          {currentEntity.phone || "Not provided"}
-                          <br />
-                          {currentEntity.email || "Not provided"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-700 mb-1">
-                          <Globe className="inline h-4 w-4 mr-1 text-slate-400" />
-                          Website
-                        </h4>
-                        <p className="text-slate-600">
-                          {currentEntity.website || "Not provided"}
-                        </p>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <span className="text-slate-600">
+                        {currentEntity.location?.city},{" "}
+                        {currentEntity.location?.district}
+                      </span>
                     </div>
 
                     <div>
                       <h4 className="text-sm font-medium text-slate-700 mb-1">
-                        Status
+                        Price Range
                       </h4>
-                      <div className="flex gap-2">
-                        <Badge variant={currentEntity.isActive ? "default" : "outline"}>
-                          {currentEntity.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                        <Badge variant={currentEntity.vistaVerified ? "default" : "outline"}>
-                          {currentEntity.vistaVerified ? "Verified" : "Unverified"}
-                        </Badge>
-                        <Badge variant={
-                          currentEntity.approvalStatus === "approved" ? "default" :
-                            currentEntity.approvalStatus === "pending" ? "secondary" : "destructive"
-                        }>
-                          {currentEntity.approvalStatus || "Pending"}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-1">
-                        Description
-                      </h4>
-                      <p className="text-slate-600 whitespace-pre-line">
-                        {currentEntity.description || "No description provided"}
+                      <p className="text-slate-600">
+                        {currentEntity.priceRangeUSD}
                       </p>
                     </div>
 
-                    {currentEntity.amenities?.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-700 mb-1">
-                          Amenities
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {currentEntity.amenities
-                            .filter(a => a.PropertyAmenity.isAvailable)
-                            .map((amenity) => (
-                              <Badge key={amenity.id} variant="outline">
-                                {amenity.name}
-                              </Badge>
-                            ))}
-                        </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-700 mb-1">
+                        Vista Verification
+                      </h4>
+                      <Badge
+                        variant={
+                          currentEntity.vistaVerified ? "default" : "outline"
+                        }
+                      >
+                        {currentEntity.vistaVerified
+                          ? "Verified"
+                          : "Not Verified"}
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-700 mb-1">
+                        Rating
+                      </h4>
+                      <div className="flex items-center text-yellow-600">
+                        ⭐ {currentEntity.reviews?.vistaReview?.rating || "N/A"}
+                        <span className="ml-1 text-xs text-slate-500">
+                          ({currentEntity.reviews?.travelerReviews?.length || 0}{" "}
+                          reviews)
+                        </span>
                       </div>
-                    )}
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-700 mb-1">
+                        Contact Details
+                      </h4>
+                      <div className="text-sm text-slate-600">
+                        <p>
+                          {currentEntity.contactDetails?.phone || "No phone"}
+                        </p>
+                        <p>
+                          {currentEntity.contactDetails?.email || "No email"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1873,7 +1436,7 @@ export const EntityManagement = ({
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       {/* Delete Confirmation Dialog */}
       {deleteEntity && (
@@ -1881,7 +1444,7 @@ export const EntityManagement = ({
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-xl text-red-600">
-                Delete Property
+                Delete Activity
               </DialogTitle>
               <DialogDescription>
                 This action cannot be undone.
@@ -1892,7 +1455,7 @@ export const EntityManagement = ({
                 <XCircle className="h-5 w-5 mr-2 flex-shrink-0" />
                 <div>
                   <p className="font-medium">
-                    Are you sure you want to delete this property?
+                    Are you sure you want to delete this activity?
                   </p>
                   <p className="mt-1 text-sm text-red-700">
                     Deleting{" "}
@@ -1918,7 +1481,7 @@ export const EntityManagement = ({
                 disabled={deleteMutation.isPending}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete Property"}
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </Button>
             </DialogFooter>
           </DialogContent>

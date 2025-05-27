@@ -3,35 +3,45 @@ import {
   Clock,
   XCircle,
   MapPin,
-  Calendar,
+  Home,
+  Hotel,
   Star,
+  Bed,
+  Users,
+  Phone,
+  Mail,
+  Globe,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EntityManagement } from "./entity-management";
 
 const defaultColumns = [
   {
     key: "title",
-    label: "Activity",
+    label: "Property",
     visible: true,
     sortable: true,
-    render: (activity) => (
+    render: (property) => (
       <div className="flex items-center gap-3">
         <Avatar className="h-9 w-9">
-          <AvatarImage src={activity.images?.[0] || ""} alt={activity.title} />
-          <AvatarFallback className="bg-emerald-100 text-emerald-700">
-            {activity.title
-              .split(" ")
-              .map((word) => word[0])
-              .join("")
-              .slice(0, 2)}
+          <AvatarImage
+            src={property.images?.[0]?.imageUrl || ""}
+            alt={property.title}
+          />
+          <AvatarFallback className="bg-blue-100 text-blue-700">
+            {property.propertyType === "hotel" ? (
+              <Hotel className="h-4 w-4" />
+            ) : (
+              <Home className="h-4 w-4" />
+            )}
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium text-slate-800">{activity.title}</p>
-          <p className="text-sm text-slate-500">{activity.type}</p>
+          <p className="font-medium text-slate-800">{property.title}</p>
+          <p className="text-sm text-slate-500 capitalize">
+            {property.propertyType} • {property.district}
+          </p>
         </div>
       </div>
     ),
@@ -41,61 +51,75 @@ const defaultColumns = [
     label: "Location",
     visible: true,
     sortable: true,
-    render: (activity) => (
+    render: (property) => (
       <div className="flex items-center">
         <MapPin className="h-3 w-3 text-slate-400 mr-1" />
         <span>
-          {activity.location?.city}, {activity.location?.district}
+          {property.city}, {property.district}
         </span>
       </div>
     ),
   },
   {
-    key: "priceRangeUSD",
-    label: "Price Range",
-    visible: true,
-    sortable: true,
-    render: (activity) => (
-      <div className="text-slate-700">{activity.priceRangeUSD}</div>
-    ),
-  },
-  {
-    key: "vistaVerified",
-    label: "Vista Verified",
-    visible: true,
-    sortable: false,
-    render: (activity) => (
-      <Badge variant={activity.vistaVerified ? "default" : "outline"}>
-        {activity.vistaVerified ? "Verified" : "Not Verified"}
-      </Badge>
-    ),
-  },
-  {
-    key: "rating",
-    label: "Rating",
-    visible: true,
-    sortable: false,
-    render: (activity) => {
-      const rating = activity.reviews?.vistaReview?.rating || "N/A";
-      const count = activity.reviews?.travelerReviews?.length || 0;
-      return (
-        <div className="flex items-center text-yellow-600 font-medium">
-          ⭐ {rating}
-          <span className="ml-1 text-xs text-slate-500">({count})</span>
-        </div>
-      );
-    },
-  },
-  {
-    key: "contactDetails",
+    key: "contact",
     label: "Contact",
     visible: true,
     sortable: false,
-    render: (activity) => (
-      <div className="text-sm text-slate-600">
-        {activity.contactDetails?.phone || "No phone"}
-        <br />
-        {activity.contactDetails?.email || "No email"}
+    render: (property) => (
+      <div className="space-y-1">
+        <div className="flex items-center text-sm">
+          <Phone className="h-3 w-3 mr-1 text-slate-400" />
+          {property.phone || "Not provided"}
+        </div>
+        <div className="flex items-center text-sm">
+          <Mail className="h-3 w-3 mr-1 text-slate-400" />
+          {property.email || "Not provided"}
+        </div>
+        {property.website && (
+          <div className="flex items-center text-sm">
+            <Globe className="h-3 w-3 mr-1 text-slate-400" />
+            <span className="truncate max-w-[160px]">{property.website}</span>
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    visible: true,
+    sortable: true,
+    render: (property) => (
+      <div className="flex flex-col  gap-3" >
+        <Badge variant={property.isActive ? "default" : "outline"}>
+          {property.isActive ? "Active" : "Inactive"}
+        </Badge>
+        {/* <Badge variant={property.vistaVerified ? "default" : "outline"}>
+          {property.vistaVerified ? "Verified" : "Unverified"}
+        </Badge> */}
+        <Badge variant={
+          property.approvalStatus === "approved" ? "default" :
+            property.approvalStatus === "pending" ? "secondary" : "destructive"
+        }>
+          {property.approvalStatus || "Pending"}
+        </Badge>
+      </div>
+    ),
+  },
+  {
+    key: "dates",
+    label: "Dates",
+    visible: true,
+    sortable: true,
+    render: (property) => (
+      <div className="text-sm space-y-1">
+        <div>Created: {new Date(property.createdAt).toLocaleDateString()}</div>
+        {property.updatedAt && (
+          <div>Updated: {new Date(property.updatedAt).toLocaleDateString()}</div>
+        )}
+        {property.approvedAt && (
+          <div>Approved: {new Date(property.approvedAt).toLocaleDateString()}</div>
+        )}
       </div>
     ),
   },
@@ -126,20 +150,42 @@ const renderStatusBadge = (status) => {
   }
 };
 
-const HotelManagement = (props) => {
+const PropertyManagement = ({ propertyType = "hotel", ...props }) => {
+  const isHotel = propertyType === "hotel";
+
   return (
     <EntityManagement
-      entityName="hotel"
-      entityPlural="hotels"
+      entityName={propertyType}
+      entityPlural={`${propertyType}s`}
       columns={defaultColumns}
       renderStatusBadge={renderStatusBadge}
-      headerTitle="Hotels Management"
-      headerDescription="Manage all your Hotel"
-      addButtonLabel="Add New Hotel"
-      enableTabs={false}
+      headerTitle={`${isHotel ? "Hotels" : "Apartments"} Management`}
+      headerDescription={`Manage all your ${isHotel ? "hotel" : "apartment"} listings`}
+      addButtonLabel={`Add New ${isHotel ? "Hotel" : "Apartment"}`}
+      enableTabs={true}
+      tabs={[
+        { value: "all", label: "All Properties" },
+        { value: "active", label: "Active", filter: (item) => item.isActive },
+        { value: "inactive", label: "Inactive", filter: (item) => !item.isActive },
+        {
+          value: "pending",
+          label: "Pending Approval",
+          filter: (item) => item.approvalStatus === "pending"
+        },
+        {
+          value: "approved",
+          label: "Approved",
+          filter: (item) => item.approvalStatus === "approved"
+        },
+        {
+          value: "rejected",
+          label: "Rejected",
+          filter: (item) => item.approvalStatus === "rejected"
+        },
+      ]}
       {...props}
     />
   );
 };
 
-export default HotelManagement;
+export default PropertyManagement;
