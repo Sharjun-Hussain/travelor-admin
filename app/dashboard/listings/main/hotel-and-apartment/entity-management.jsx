@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -77,6 +77,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { exportToExcel } from "@/lib/utils";
+import axios from "axios";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -154,6 +156,8 @@ export const EntityManagement = ({
     phone: "",
     email: "",
     website: "",
+    latitude: "",
+    longitude: "",
     availabilityStatus: "available",
     approvalStatus: "pending",
     amenities: [],
@@ -176,6 +180,30 @@ export const EntityManagement = ({
   const [uploadingImages, setUploadingImages] = useState(false);
   const fileInputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fetchedAmanities, setfetchedAmanities] = useState([])
+
+  useEffect(() => {
+
+    const fetchAmenities = async () => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/amenities`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.status === 200) {
+        setfetchedAmanities(response.data?.data)
+      } else {
+        toast.error("Failed to fetch amenities", {
+          description: "Please try again later.",
+        });
+      }
+
+    }
+    fetchAmenities()
+
+  }, [])
+
 
   // Query hooks
   const {
@@ -318,10 +346,57 @@ export const EntityManagement = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddEntity = (e) => {
+  const handleCheckChange = (value) => {
+    setFormData((prev) => {
+      const isSelected = prev.amenities.includes(value);
+      const updatedAmenities = isSelected
+        ? prev.amenities.filter((id) => id !== value)
+        : [...prev.amenities, value];
+
+      // 🔔 Alert right after calculating the new state
+      alert(updatedAmenities);
+
+      return { ...prev, amenities: updatedAmenities };
+    });
+  };
+
+  const handleAddEntity = async (e) => {
     e.preventDefault();
+
+    const newformdata = new FormData();
+    newformdata.append("title", formData.title);
+    newformdata.append("propertyType", formData.propertyType);
+    newformdata.append("address", formData.address);
+    newformdata.append("city", formData.city);
+    newformdata.append("district", formData.district);
+    newformdata.append("province", formData.province);
+    newformdata.append("country", formData.country);
+    newformdata.append("description", formData.description);
+    newformdata.append("email", formData.email);
+    newformdata.append("website", formData.website);
+    newformdata.append("postalCode", formData.postalCode);
+    newformdata.append("latitude", formData.latitude);
+    newformdata.append("longitude", formData.longitude);
+    newformdata.append("phone", formData.phone);
+    newformdata.append("checkInTime", formData.checkInTime);
+    newformdata.append("cancellationPolicy", formData.cancellationPolicy);
+    newformdata.append("checkOutTime", formData.checkOutTime);
+    newformdata.append("amenities", formData.amenities);
+    selectedFiles.forEach((file) => {
+      newformdata.append("images", file);
+    });
+
+    //need to remove before production
+    for (let [key, value] of newformdata.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, value.name, value.type, value.size);
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+
     if (addEntity) {
-      addMutation.mutate(formData);
+      addMutation.mutate(newformdata);
     }
   };
 
@@ -1392,6 +1467,28 @@ export const EntityManagement = ({
                             </>
                           )}
                         </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      Amanities
+                      <div className="flex gap-4 mt-3">
+                        {fetchedAmanities.map((item, index) => {
+                          return (
+                            <div
+                              checked={formData.amenities.includes(item.id)}
+                              onChange={() => handleCheckChange(item.id)}
+                              id={index} className="flex items-center space-x-2">
+                              <Checkbox id={item.name} />
+                              <label
+                                htmlFor={item.name}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {item.name}
+                              </label>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   </div>
