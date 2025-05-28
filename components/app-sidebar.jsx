@@ -175,44 +175,44 @@ const data = {
     {
       title: "Hotel & Apartment",
       icon: BuildingIcon,
-      url: "/admin/hotel-and-aprtments",
+      url: "/dashboard/listings/main/hotel-and-apartment",
       items: [
         {
-          title: "Add Property",
-          url: "/admin/hotel-and-aprtments/add",
+          title: "Properties",
+          url: "/dashboard/listings/main/hotel-and-apartment",
         },
 
-        {
-          title: "Property Types",
-          url: "/admin/hotel-and-aprtments/types",
-        },
-        {
-          title: "Amenities",
-          url: "/dashboard/listings/main/hotel-and-apartment/amenities",
-        },
+        // {
+        //   title: "Property Types",
+        //   url: "/admin/hotel-and-aprtments/types",
+        // },
+        // {
+        //   title: "Amenities",
+        //   url: "/dashboard/listings/main/hotel-and-apartment/amenities",
+        // },
         {
           title: "Manage Rooms",
-          url: "/admin/hotel-and-aprtments/rooms",
+          url: "/dashboard/listings/main/hotel-and-apartment/rooms",
         },
       ],
     },
     {
       title: "Homestays",
       icon: BedIcon,
-      url: "/admin/homestays",
+      url: "/dashboard/listings/main/homestays",
       items: [
         {
-          title: "Add Room",
-          url: "/admin/rooms/add",
+          title: "Properties",
+          url: "/dashboard/listings/main/homestays",
         },
-        {
-          title: "Room Types",
-          url: "/admin/rooms/types",
-        },
-        {
-          title: "Amenities",
-          url: "/dashboard/listings/main/homestay/amenities",
-        },
+        // {
+        //   title: "Room Types",
+        //   url: "/admin/rooms/types",
+        // },
+        // {
+        //   title: "Amenities",
+        //   url: "/dashboard/listings/main/homestay/amenities",
+        // },
       ],
     },
   ],
@@ -387,26 +387,26 @@ const data = {
     },
   ],
   navSecondary: [
-    {
-      title: "Role Management",
-      url: "/admin/roles",
-      icon: ShieldIcon,
-    },
+    // {
+    //   title: "Role Management",
+    //   url: "/admin/roles",
+    //   icon: ShieldIcon,
+    // },
     {
       title: "Settings",
       url: "/admin/settings",
       icon: Settings2Icon,
     },
-    {
-      title: "Help Center",
-      url: "/admin/help",
-      icon: HelpCircleIcon,
-    },
-    {
-      title: "Search",
-      url: "/admin/search",
-      icon: SearchIcon,
-    },
+    // {
+    //   title: "Help Center",
+    //   url: "/admin/help",
+    //   icon: HelpCircleIcon,
+    // },
+    // {
+    //   title: "Search",
+    //   url: "/admin/search",
+    //   icon: SearchIcon,
+    // },
   ],
   documents: [
     {
@@ -537,11 +537,11 @@ const data = {
     },
   ],
   hostbookingitems: [
-    {
-      title: "Booking Calendar",
-      url: "/dashboard/Booking-calender",
-      icon: LayoutDashboardIcon,
-    },
+    // {
+    //   title: "Booking Calendar",
+    //   url: "/dashboard/Booking-calender",
+    //   icon: LayoutDashboardIcon,
+    // },
     {
       title: "Amenties",
       url: "/dashboard/amenities",

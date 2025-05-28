@@ -133,9 +133,6 @@ export const EntityManagement = ({
   viewDetails,
   initialFormData = {
     name: "",
-    slug: "amenity",
-    icon: "icon",
-    category: "category",
     language_code: "en",
     isActive: true,
   },
@@ -1081,7 +1078,7 @@ export const EntityManagement = ({
                     />
                   </div>
 
-                  <div className="grid gap-2">
+                  {/* <div className="grid gap-2">
                     <Label htmlFor="slug" className="text-slate-700">
                       Slug
                     </Label>
@@ -1095,7 +1092,7 @@ export const EntityManagement = ({
                       required
                       className="border-slate-300"
                     />
-                  </div>
+                  </div> */}
 
                   {/* <div className="grid gap-2">
                     <Label htmlFor="language_code" className="text-slate-700">

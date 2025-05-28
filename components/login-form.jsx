@@ -117,7 +117,7 @@ export function LoginForm({ className, ...props }) {
                 {Loading ? (
                   <span className="flex gap-2 items-center">
                     {" "}
-                    <Circle size={27} className="animate-spin " />
+                    <Circle size={40} className="animate-spin " />
                     Signin in..
                   </span>
                 ) : (
