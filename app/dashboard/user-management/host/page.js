@@ -1,10 +1,10 @@
 import React from "react";
-import HostPageWrapper from "./HostPageWrapper";
+import PageWrapper from "./Wrapper";
 
 const page = () => {
   return (
     <div>
-      <HostPageWrapper />
+      <PageWrapper />
     </div>
   );
 };
