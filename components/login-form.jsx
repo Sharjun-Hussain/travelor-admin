@@ -35,7 +35,7 @@ export function LoginForm({ className, ...props }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/login`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/login`,
         {
           method: "POST",
           headers: {

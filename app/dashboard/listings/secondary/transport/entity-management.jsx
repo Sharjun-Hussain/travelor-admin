@@ -143,8 +143,7 @@ export const EntityManagement = ({
   additionalTabs = [],
   headerTitle = "Management",
   headerDescription = `Manage all your ${entityPlural}`,
-  addButtonLabel = `Add New ${
-    entityName.charAt(0).toUpperCase() + entityName.slice(1)
+  addButtonLabel = `Add New ${entityName.charAt(0).toUpperCase() + entityName.slice(1)
   }`,
   emptyState,
   createForm,
@@ -236,13 +235,11 @@ export const EntityManagement = ({
         newEntity,
       ]);
       toast.success(
-        `${
-          entityName.charAt(0).toUpperCase() + entityName.slice(1)
+        `${entityName.charAt(0).toUpperCase() + entityName.slice(1)
         } added successfully`,
         {
-          description: `${
-            newEntity.name || newEntity.title
-          } has been added to your ${entityName} list.`,
+          description: `${newEntity.name || newEntity.title
+            } has been added to your ${entityName} list.`,
         }
       );
       setIsAddDialogOpen(false);
@@ -266,9 +263,8 @@ export const EntityManagement = ({
         )
       );
       toast.success("Changes saved", {
-        description: `${
-          updatedEntity.name || updatedEntity.title
-        }'s information has been updated.`,
+        description: `${updatedEntity.name || updatedEntity.title
+          }'s information has been updated.`,
       });
       setIsEditDialogOpen(false);
     },
@@ -642,11 +638,10 @@ export const EntityManagement = ({
                   </div>
                 )}
                 <div
-                  className={`${
-                    enableSearch
+                  className={`${enableSearch
                       ? "md:col-span-6 lg:col-span-7"
                       : "md:col-span-12"
-                  } flex flex-wrap justify-start md:justify-end gap-2`}
+                    } flex flex-wrap justify-start md:justify-end gap-2`}
                 >
                   {enableFilters && (
                     <>
@@ -709,9 +704,8 @@ export const EntityManagement = ({
                         {visibleColumns.map((column) => (
                           <TableHead
                             key={column.key}
-                            className={`font-semibold text-slate-700 ${
-                              column.sortable ? "cursor-pointer" : ""
-                            } ${column.className || ""}`}
+                            className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
+                              } ${column.className || ""}`}
                             onClick={() =>
                               column.sortable && requestSort(column.key)
                             }
@@ -720,11 +714,10 @@ export const EntityManagement = ({
                               {column.label}
                               {sortConfig.key === column.key && (
                                 <ChevronDown
-                                  className={`ml-1 h-4 w-4 ${
-                                    sortConfig.direction === "desc"
+                                  className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
                                       ? "rotate-180 duration"
                                       : ""
-                                  }`}
+                                    }`}
                                 />
                               )}
                             </div>
@@ -760,8 +753,8 @@ export const EntityManagement = ({
                                 {column.render
                                   ? column.render(entity)
                                   : typeof entity[column.key] === "object"
-                                  ? JSON.stringify(entity[column.key]) // Fallback for objects
-                                  : entity[column.key] || "-"}
+                                    ? JSON.stringify(entity[column.key]) // Fallback for objects
+                                    : entity[column.key] || "-"}
                               </TableCell>
                             ))}
                             <TableCell className="text-right">
@@ -862,9 +855,8 @@ export const EntityManagement = ({
                             {visibleColumns.map((column) => (
                               <TableHead
                                 key={column.key}
-                                className={`font-semibold text-slate-700 ${
-                                  column.sortable ? "cursor-pointer" : ""
-                                } ${column.className || ""}`}
+                                className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
+                                  } ${column.className || ""}`}
                                 onClick={() =>
                                   column.sortable && requestSort(column.key)
                                 }
@@ -873,11 +865,10 @@ export const EntityManagement = ({
                                   {column.label}
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${
-                                        sortConfig.direction === "desc"
+                                      className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
                                           ? "rotate-180"
                                           : ""
-                                      }`}
+                                        }`}
                                     />
                                   )}
                                 </div>
@@ -990,9 +981,8 @@ export const EntityManagement = ({
                             {visibleColumns.map((column) => (
                               <TableHead
                                 key={column.key}
-                                className={`font-semibold text-slate-700 ${
-                                  column.sortable ? "cursor-pointer" : ""
-                                } ${column.className || ""}`}
+                                className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
+                                  } ${column.className || ""}`}
                                 onClick={() =>
                                   column.sortable && requestSort(column.key)
                                 }
@@ -1001,11 +991,10 @@ export const EntityManagement = ({
                                   {column.label}
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${
-                                        sortConfig.direction === "desc"
+                                      className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
                                           ? "rotate-180"
                                           : ""
-                                      }`}
+                                        }`}
                                     />
                                   )}
                                 </div>
@@ -1118,9 +1107,8 @@ export const EntityManagement = ({
                             {visibleColumns.map((column) => (
                               <TableHead
                                 key={column.key}
-                                className={`font-semibold text-slate-700 ${
-                                  column.sortable ? "cursor-pointer" : ""
-                                } ${column.className || ""}`}
+                                className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
+                                  } ${column.className || ""}`}
                                 onClick={() =>
                                   column.sortable && requestSort(column.key)
                                 }
@@ -1129,11 +1117,10 @@ export const EntityManagement = ({
                                   {column.label}
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${
-                                        sortConfig.direction === "desc"
+                                      className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
                                           ? "rotate-180"
                                           : ""
-                                      }`}
+                                        }`}
                                     />
                                   )}
                                 </div>

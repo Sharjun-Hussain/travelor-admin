@@ -227,7 +227,8 @@ export const EntityManagement = ({
         `${entityName.charAt(0).toUpperCase() + entityName.slice(1)
         } added successfully`,
         {
-          description: `${newEntity.name} has been added to your ${entityName} list.`,
+          description: `${newEntity.name || newEntity.title
+            } has been added to your ${entityName} list.`,
         }
       );
       setIsAddDialogOpen(false);
@@ -235,11 +236,12 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to add ${entityName}`, {
-        description: `There was an error adding the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error adding the ${entityName}. Please try again.`,
       });
     },
   });
-
   const updateMutation = useMutation({
     mutationFn: updateEntity,
     onSuccess: (updatedEntity) => {
@@ -354,7 +356,7 @@ export const EntityManagement = ({
         : [...prev.amenities, value];
 
       // 🔔 Alert right after calculating the new state
-      alert(updatedAmenities);
+
 
       return { ...prev, amenities: updatedAmenities };
     });
@@ -374,14 +376,17 @@ export const EntityManagement = ({
     newformdata.append("description", formData.description);
     newformdata.append("email", formData.email);
     newformdata.append("website", formData.website);
-    newformdata.append("postalCode", formData.postalCode);
+    newformdata.append("postalCode", "12122");
     newformdata.append("latitude", formData.latitude);
     newformdata.append("longitude", formData.longitude);
     newformdata.append("phone", formData.phone);
     newformdata.append("checkInTime", formData.checkInTime);
     newformdata.append("cancellationPolicy", formData.cancellationPolicy);
     newformdata.append("checkOutTime", formData.checkOutTime);
-    newformdata.append("amenities", formData.amenities);
+    newformdata.append("country", formData.country);
+    formData.amenities.forEach(id => {
+      newformdata.append("amenities[]", id);
+    });
     selectedFiles.forEach((file) => {
       newformdata.append("images", file);
     });
@@ -434,7 +439,6 @@ export const EntityManagement = ({
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
   };
-
   const handleImageUpload = async (e) => {
     console.log("File input ref:", fileInputRef.current);
     console.log("Files:", fileInputRef.current?.files);
@@ -1339,6 +1343,37 @@ export const EntityManagement = ({
                       />
                     </div>
 
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="latitude">latitude</Label>
+                        <Input
+                          id="latitude"
+                          name="latitude"
+                          placeholder="Enter latitude"
+                          value={formData.latitude}
+                          onChange={handleInputChange}
+                          required
+                          className="border-slate-300"
+                        />
+                      </div>
+
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="longitude">longitude</Label>
+                        <Input
+                          id="longitude"
+                          name="longitude"
+                          placeholder="Enter longitude"
+                          value={formData.longitude}
+                          onChange={handleInputChange}
+                          required
+                          className="border-slate-300"
+                        />
+                      </div>
+
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="checkInTime">Check-in Time</Label>
@@ -1662,6 +1697,36 @@ export const EntityManagement = ({
                         onChange={handleInputChange}
                         className="border-slate-300"
                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="title">Property Name</Label>
+                        <Input
+                          id="title"
+                          name="title"
+                          placeholder="Enter property name"
+                          value={formData.title}
+                          onChange={handleInputChange}
+                          required
+                          className="border-slate-300"
+                        />
+                      </div>
+
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="title">Property Name</Label>
+                        <Input
+                          id="title"
+                          name="title"
+                          placeholder="Enter property name"
+                          value={formData.title}
+                          onChange={handleInputChange}
+                          required
+                          className="border-slate-300"
+                        />
+                      </div>
+
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

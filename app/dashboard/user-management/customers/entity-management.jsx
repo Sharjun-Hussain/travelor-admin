@@ -1,5 +1,5 @@
 // components/entity-management.tsx
-import { useState } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -23,6 +23,10 @@ import {
   Calendar,
   Star,
   MapPin,
+  Image as ImageIcon,
+  X,
+  Phone,
+  Check,
 } from "lucide-react";
 import {
   Table,
@@ -71,7 +75,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { exportToExcel } from "@/lib/utils";
+import axios from "axios";
+import { MultiSelect } from "@/components/multi-select";
+import { uploadImagesToS3 } from "@/lib/s3BucketUploader";
+import Image from "next/image";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -105,6 +115,7 @@ const defaultRenderStatusBadge = (status) => {
   }
 };
 
+
 export const EntityManagement = ({
   entityName = "host",
   entityPlural = "hosts",
@@ -131,36 +142,32 @@ export const EntityManagement = ({
   createForm,
   editForm,
   viewDetails,
+  statusfilterenabled = false,
   initialFormData = {
-    activity: {
+    id: "",
+    userId: "",
+    businessName: "",
+    businessRegistrationNumber: "",
+    businessType: "",
+    businessDescription: "",
+    isSriLankan: true,
+    nicNumber: "",
+    passportNumber: "",
+    address: "",
+    city: "",
+    country: "Sri Lanka",
+    phoneNumber: "",
+    status: "pending",
+    maxPropertiesAllowed: 1,
+    verificationDate: null,
+    suspensionReason: null,
+    user: {
       id: "",
-      title: "",
-      images: [],
-      reviews: {
-        vistaReview: {
-          rating: null,
-          text: "",
-        },
-        travelerReviews: [],
-      },
-      vistaVerified: false,
-      priceRangeUSD: "",
-      contactDetails: {
-        phone: "",
-        email: "",
-        website: "",
-      },
-      fullDescription: "",
-      location: {
-        city: "",
-        district: "",
-        coordinates: {
-          lat: null,
-          lng: null,
-        },
-      },
-      type: "",
-    },
+      email: "",
+      name: "",
+      accountType: "merchant",
+      isActive: true
+    }
   },
   defaultSort = { key: "name", direction: "asc" },
 }) => {
@@ -175,6 +182,54 @@ export const EntityManagement = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isDeclineReasonDialogOpen, setDeclineReasonDialogOpen] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: (hostId) => axios.patch(`/hosts/${hostId}/approve`),
+    onSuccess: () => {
+      toast.success("Host approved successfully");
+      refetch();
+      setIsViewDialogOpen(false);
+    },
+    onError: () => {
+      toast.error("Failed to approve host");
+    }
+  });
+
+  // Decline mutation
+  const declineMutation = useMutation({
+    mutationFn: ({ hostId, reason }) =>
+      axios.patch(`/hosts/${hostId}/decline`, { reason }),
+    onSuccess: () => {
+      toast.success("Host declined successfully");
+      refetch();
+      setIsViewDialogOpen(false);
+      setDeclineReason("");
+    },
+    onError: () => {
+      toast.error("Failed to decline host");
+    }
+  });
+
+  const handleApproveHost = (hostId) => {
+    approveMutation.mutate(hostId);
+  };
+
+  const handleDeclineHost = (hostId, reason) => {
+    declineMutation.mutate({ hostId, reason });
+  };
+
+
+
+
+
+  const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
+  console.log(datafromlocalstorage.data.accessToken);
 
   const queryClient = useQueryClient();
 
@@ -200,7 +255,8 @@ export const EntityManagement = ({
         `${entityName.charAt(0).toUpperCase() + entityName.slice(1)
         } added successfully`,
         {
-          description: `${newEntity.name} has been added to your ${entityName} list.`,
+          description: `${newEntity.name || newEntity.title
+            } has been added to your ${entityName} list.`,
         }
       );
       setIsAddDialogOpen(false);
@@ -208,7 +264,9 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to add ${entityName}`, {
-        description: `There was an error adding the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error adding the ${entityName}. Please try again.`,
       });
     },
   });
@@ -222,13 +280,16 @@ export const EntityManagement = ({
         )
       );
       toast.success("Changes saved", {
-        description: `${updatedEntity.name}'s information has been updated.`,
+        description: `${updatedEntity.name || updatedEntity.title
+          }'s information has been updated.`,
       });
       setIsEditDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Failed to update ${entityName}`, {
-        description: `There was an error updating the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error updating the ${entityName}. Please try again.`,
       });
     },
   });
@@ -249,7 +310,9 @@ export const EntityManagement = ({
     },
     onError: (error) => {
       toast.error(`Failed to delete ${entityName}`, {
-        description: `There was an error deleting the ${entityName}. Please try again.`,
+        description:
+          error.message ||
+          `There was an error deleting the ${entityName}. Please try again.`,
       });
     },
   });
@@ -257,10 +320,11 @@ export const EntityManagement = ({
   // Filter and sort entities
   const filteredEntities = entities.filter((entity) => {
     const matchesSearch =
-      entity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entity.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (entity.country &&
-        entity.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      entity.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entity.website &&
+        entity.website.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (entity.city &&
         entity.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
       Object.keys(entity).some(
@@ -279,6 +343,10 @@ export const EntityManagement = ({
   const sortedEntities = [...filteredEntities].sort((a, b) => {
     let aValue = a[sortConfig.key];
     let bValue = b[sortConfig.key];
+
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) aValue = "";
+    if (bValue === undefined || bValue === null) bValue = "";
 
     // Handle string comparison
     if (typeof aValue === "string" && typeof bValue === "string") {
@@ -315,17 +383,64 @@ export const EntityManagement = ({
   // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Split by dot to handle nested updates
+    const keys = name.split(".");
+    if (keys.length === 1) {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    } else {
+      setFormData((prev) => {
+        const newData = { ...prev };
+        let temp = newData;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!temp[keys[i]]) temp[keys[i]] = {};
+          temp[keys[i]] = { ...temp[keys[i]] };
+          temp = temp[keys[i]];
+        }
+
+        temp[keys[keys.length - 1]] = value;
+        return newData;
+      });
+    }
   };
 
   const handleSelectChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddEntity = (e) => {
+  const handleAddEntity = async (e) => {
     e.preventDefault();
+
+    const newformdata = new FormData();
+    newformdata.append("title", formData.title);
+    newformdata.append("transportTypes", formData.transportTypes);
+    newformdata.append("address", formData.address);
+    newformdata.append("city", formData.city);
+    newformdata.append("district", formData.district);
+    newformdata.append("province", formData.province);
+    newformdata.append("serviceArea", formData.serviceArea);
+    newformdata.append("description", formData.description);
+    newformdata.append("email", formData.email);
+    newformdata.append("website", formData.website);
+    newformdata.append("phone", formData.phone);
+    newformdata.append("amenities", formData.amenities);
+
+    selectedFiles.forEach((file) => {
+      newformdata.append("images", file);
+    });
+
+    //need to remove before production
+    for (let [key, value] of newformdata.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, value.name, value.type, value.size);
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+
     if (addEntity) {
-      addMutation.mutate(formData);
+      addMutation.mutate(newformdata);
     }
   };
 
@@ -362,6 +477,63 @@ export const EntityManagement = ({
   const openDeleteDialog = (entity) => {
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    console.log("File input ref:", fileInputRef.current);
+    console.log("Files:", fileInputRef.current?.files);
+    console.log("File count:", fileInputRef.current?.files?.length);
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    console.log("Selected files:", files);
+    setUploadingImages(true);
+
+    setSelectedFiles(files);
+
+    try {
+      const uploadedUrls = await Promise.all(
+        files.map((file) => {
+          return new Promise((resolve) => {
+            // Simulate upload delay
+            setTimeout(() => {
+              const url = URL.createObjectURL(file);
+              resolve(url);
+            }, 1000);
+          });
+        })
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+      // toast.success("Images uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload images", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setUploadingImages(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const removeImage = (index) => {
+    setFormData((prev) => {
+      const newImages = [...prev.images];
+      newImages.splice(index, 1);
+      return { ...prev, images: newImages };
+    });
+  };
+
+  const getTransportTypeName = (id) => {
+    return (
+      FetchedTransportTypes.find((type) => type.id === id)?.name || "Unknown"
+    );
   };
 
   if (isLoading) {
@@ -402,7 +574,7 @@ export const EntityManagement = ({
   const visibleColumns = columns.filter((col) => col.visible !== false);
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 max-w-full">
       <div className="flex flex-col gap-6">
         {/* Header Section with gradient */}
         <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg p-8 mb-4">
@@ -484,32 +656,42 @@ export const EntityManagement = ({
                 )}
                 <div
                   className={`${enableSearch
-                      ? "md:col-span-6 lg:col-span-7"
-                      : "md:col-span-12"
+                    ? "md:col-span-6 lg:col-span-7"
+                    : "md:col-span-12"
                     } flex flex-wrap justify-start md:justify-end gap-2`}
                 >
                   {enableFilters && (
                     <>
-                      <Select
-                        value={statusFilter}
-                        onValueChange={(value) => setStatusFilter(value)}
-                      >
-                        <SelectTrigger className="w-[140px] border-slate-300">
-                          <SelectValue placeholder="Filter by status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {statusfilterenabled && (
+                        <>
+                          <Select
+                            value={statusFilter}
+                            onValueChange={(value) => setStatusFilter(value)}
+                          >
+                            <SelectTrigger className="w-[140px] border-slate-300">
+                              <SelectValue placeholder="Filter by status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {statusOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                      <Button variant="outline" className="border-slate-300">
-                        <SlidersHorizontal className="h-4 w-4 mr-2" />
-                        More Filters
-                      </Button>
+                          <Button
+                            variant="outline"
+                            className="border-slate-300"
+                          >
+                            <SlidersHorizontal className="h-4 w-4 mr-2" />
+                            More Filters
+                          </Button>
+                        </>
+                      )}
                     </>
                   )}
 
@@ -519,7 +701,7 @@ export const EntityManagement = ({
                     <Button
                       variant="outline"
                       className="border-slate-300"
-                      onClick={() => exportToExcel(entities, "Activities")}
+                      onClick={() => exportToExcel(entities, "Transport")}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Export
@@ -530,10 +712,10 @@ export const EntityManagement = ({
             )}
 
             {/* Entity Listing Table */}
-            <div className="overflow-hidden border rounded-md">
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
+            <div className="overflow-hidden border rounded-md w-full">
+              <CardContent className="p-0 w-full ">
+                <div className="overflow-x-auto w-full">
+                  <Table className="w-full">
                     <TableHeader className="bg-slate-50">
                       <TableRow className="hover:bg-slate-50 border-slate-200">
                         {visibleColumns.map((column) => (
@@ -550,8 +732,8 @@ export const EntityManagement = ({
                               {sortConfig.key === column.key && (
                                 <ChevronDown
                                   className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                      ? "rotate-180"
-                                      : ""
+                                    ? "rotate-180 duration"
+                                    : ""
                                     }`}
                                 />
                               )}
@@ -587,7 +769,9 @@ export const EntityManagement = ({
                               >
                                 {column.render
                                   ? column.render(entity)
-                                  : entity[column.key]}
+                                  : typeof entity[column.key] === "object"
+                                    ? JSON.stringify(entity[column.key]) // Fallback for objects
+                                    : entity[column.key] || "-"}
                               </TableCell>
                             ))}
                             <TableCell className="text-right">
@@ -699,8 +883,8 @@ export const EntityManagement = ({
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
                                       className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
+                                        ? "rotate-180"
+                                        : ""
                                         }`}
                                     />
                                   )}
@@ -740,7 +924,7 @@ export const EntityManagement = ({
                                     >
                                       {column.render
                                         ? column.render(entity)
-                                        : entity[column.key]}
+                                        : entity[column.key] || "-"}
                                     </TableCell>
                                   ))}
                                   <TableCell className="text-right">
@@ -825,8 +1009,8 @@ export const EntityManagement = ({
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
                                       className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
+                                        ? "rotate-180"
+                                        : ""
                                         }`}
                                     />
                                   )}
@@ -866,7 +1050,7 @@ export const EntityManagement = ({
                                     >
                                       {column.render
                                         ? column.render(entity)
-                                        : entity[column.key]}
+                                        : entity[column.key] || "-"}
                                     </TableCell>
                                   ))}
                                   <TableCell className="text-right">
@@ -951,8 +1135,8 @@ export const EntityManagement = ({
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
                                       className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
+                                        ? "rotate-180"
+                                        : ""
                                         }`}
                                     />
                                   )}
@@ -992,7 +1176,7 @@ export const EntityManagement = ({
                                     >
                                       {column.render
                                         ? column.render(entity)
-                                        : entity[column.key]}
+                                        : entity[column.key] || "-"}
                                     </TableCell>
                                   ))}
                                   <TableCell className="text-right">
@@ -1066,14 +1250,14 @@ export const EntityManagement = ({
         </Tabs>
       </div>
 
-      {/* Add Activity Dialog */}
+      {/* Add Transport Dialog */}
       {addEntity && (
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl">Add New Activity</DialogTitle>
+              <DialogTitle className="text-xl">Add New Host</DialogTitle>
               <DialogDescription>
-                Create a new activity for your platform
+                Register a new host business on your platform
               </DialogDescription>
             </DialogHeader>
             {createForm ? (
@@ -1086,144 +1270,263 @@ export const EntityManagement = ({
               })
             ) : (
               <form onSubmit={handleAddEntity}>
-                <div className="grid gap-6 py-4">
-                  {/* Row 1 - Title and Type */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-slate-700 font-medium">
-                        Activity Title <span className="text-red-500">*</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                  {/* Left Column - Business Details */}
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessName" className="text-slate-700">
+                        Business Name*
                       </Label>
                       <Input
-                        id="title"
-                        name="title"
-                        placeholder="Enter activity title"
-                        value={formData.title}
+                        id="businessName"
+                        name="businessName"
+                        placeholder="Enter business name"
+                        value={formData.businessName}
                         onChange={handleInputChange}
                         required
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="border-slate-300"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="type" className="text-slate-700 font-medium">
-                        Type <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="type"
-                        name="type"
-                        placeholder="Enter activity type"
-                        value={formData.type}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 2 - Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="city" className="text-slate-700 font-medium">
-                        City <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="city"
-                        name="location.city"
-                        placeholder="Enter city"
-                        value={formData.location?.city || ""}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="district" className="text-slate-700 font-medium">
-                        District
-                      </Label>
-                      <Input
-                        id="district"
-                        name="location.district"
-                        placeholder="Enter district"
-                        value={formData.location?.district || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 3 - Price and Verification */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="priceRangeUSD" className="text-slate-700 font-medium">
-                        Price Range (USD)
-                      </Label>
-                      <Input
-                        id="priceRangeUSD"
-                        name="priceRangeUSD"
-                        placeholder="Enter price range (e.g., $50-$100)"
-                        value={formData.priceRangeUSD}
-                        onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="vistaVerified" className="text-slate-700 font-medium">
-                        Vista Verified
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessType" className="text-slate-700">
+                        Business Type*
                       </Label>
                       <Select
-                        value={formData.vistaVerified ? "true" : "false"}
+                        value={formData.businessType}
                         onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            vistaVerified: value === "true",
-                          })
+                          setFormData({ ...formData, businessType: value })
                         }
                       >
-                        <SelectTrigger className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                          <SelectValue placeholder="Select verification status" />
+                        <SelectTrigger className="border-slate-300">
+                          <SelectValue placeholder="Select business type" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="true" className="hover:bg-slate-100">Verified</SelectItem>
-                          <SelectItem value="false" className="hover:bg-slate-100">Not Verified</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="hotel">Hotel</SelectItem>
+                          <SelectItem value="guesthouse">Guesthouse</SelectItem>
+                          <SelectItem value="villa">Villa</SelectItem>
+                          <SelectItem value="apartment">Apartment</SelectItem>
+                          <SelectItem value="resort">Resort</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  {/* Row 4 - Contact Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-slate-700 font-medium">
-                        Contact Phone
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessRegistrationNumber" className="text-slate-700">
+                        Registration Number*
                       </Label>
                       <Input
-                        id="phone"
-                        name="contactDetails.phone"
-                        placeholder="Enter phone number"
-                        value={formData.contactDetails?.phone || ""}
+                        id="businessRegistrationNumber"
+                        name="businessRegistrationNumber"
+                        placeholder="Enter registration number"
+                        value={formData.businessRegistrationNumber}
                         onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        className="border-slate-300"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-slate-700 font-medium">
-                        Contact Email
+                    <div className="grid gap-2">
+                      <Label htmlFor="isSriLankan" className="text-slate-700">
+                        Sri Lankan Business
+                      </Label>
+                      <Select
+                        value={formData.isSriLankan ? "true" : "false"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, isSriLankan: value === "true" })
+                        }
+                      >
+                        <SelectTrigger className="border-slate-300">
+                          <SelectValue placeholder="Is this a Sri Lankan business?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Yes</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {formData.isSriLankan ? (
+                      <div className="grid gap-2">
+                        <Label htmlFor="nicNumber" className="text-slate-700">
+                          NIC Number*
+                        </Label>
+                        <Input
+                          id="nicNumber"
+                          name="nicNumber"
+                          placeholder="Enter NIC number"
+                          value={formData.nicNumber}
+                          onChange={handleInputChange}
+                          required={formData.isSriLankan}
+                          className="border-slate-300"
+                        />
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        <Label htmlFor="passportNumber" className="text-slate-700">
+                          Passport Number*
+                        </Label>
+                        <Input
+                          id="passportNumber"
+                          name="passportNumber"
+                          placeholder="Enter passport number"
+                          value={formData.passportNumber}
+                          onChange={handleInputChange}
+                          required={!formData.isSriLankan}
+                          className="border-slate-300"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column - Location Details */}
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="address" className="text-slate-700">
+                        Address*
                       </Label>
                       <Input
-                        id="email"
-                        name="contactDetails.email"
-                        placeholder="Enter email"
-                        value={formData.contactDetails?.email || ""}
+                        id="address"
+                        name="address"
+                        placeholder="Enter business address"
+                        value={formData.address}
                         onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="city" className="text-slate-700">
+                        City*
+                      </Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        placeholder="Enter city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="country" className="text-slate-700">
+                        Country*
+                      </Label>
+                      <Input
+                        id="country"
+                        name="country"
+                        placeholder="Enter country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="phoneNumber" className="text-slate-700">
+                        Phone Number*
+                      </Label>
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        placeholder="Enter phone number with country code"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="maxPropertiesAllowed" className="text-slate-700">
+                        Max Properties Allowed
+                      </Label>
+                      <Input
+                        id="maxPropertiesAllowed"
+                        name="maxPropertiesAllowed"
+                        type="number"
+                        min="1"
+                        placeholder="Enter maximum properties allowed"
+                        value={formData.maxPropertiesAllowed}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessDescription" className="text-slate-700">
+                        Business Description
+                      </Label>
+                      <Textarea
+                        id="businessDescription"
+                        name="businessDescription"
+                        placeholder="Enter business description"
+                        value={formData.businessDescription}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                        rows={3}
                       />
                     </div>
                   </div>
                 </div>
-                <DialogFooter>
+
+                {/* User Account Section */}
+                <div className="border-t border-slate-200 pt-4 mt-4">
+                  <h3 className="text-lg font-medium text-slate-800 mb-4">
+                    User Account Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="user.email" className="text-slate-700">
+                        Email*
+                      </Label>
+                      <Input
+                        id="user.email"
+                        name="user.email"
+                        type="email"
+                        placeholder="Enter user email"
+                        value={formData.user?.email || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            user: { ...formData.user, email: e.target.value },
+                          })
+                        }
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="user.name" className="text-slate-700">
+                        Name*
+                      </Label>
+                      <Input
+                        id="user.name"
+                        name="user.name"
+                        placeholder="Enter user name"
+                        value={formData.user?.name || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            user: { ...formData.user, name: e.target.value },
+                          })
+                        }
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-6">
                   <Button
                     type="button"
                     variant="outline"
@@ -1236,7 +1539,7 @@ export const EntityManagement = ({
                     disabled={addMutation.isPending}
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                   >
-                    {addMutation.isPending ? "Adding..." : "Add Activity"}
+                    {addMutation.isPending ? "Adding..." : "Add Host"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -1245,13 +1548,15 @@ export const EntityManagement = ({
         </Dialog>
       )}
 
-      {/* Edit Activity Dialog */}
+      {/* Edit Transport Dialog */}
       {updateEntity && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl">Edit Activity</DialogTitle>
-              <DialogDescription>Update activity information</DialogDescription>
+              <DialogTitle className="text-xl">Edit Transport</DialogTitle>
+              <DialogDescription>
+                Update transport information
+              </DialogDescription>
             </DialogHeader>
             {editForm ? (
               React.cloneElement(editForm, {
@@ -1263,131 +1568,261 @@ export const EntityManagement = ({
               })
             ) : (
               <form onSubmit={handleUpdateEntity}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-title" className="text-slate-700">
-                      Activity Title
-                    </Label>
-                    <Input
-                      id="edit-title"
-                      name="title"
-                      placeholder="Enter activity title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      required
-                      className="border-slate-300"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                  {/* Left Column - Business Details */}
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessName" className="text-slate-700">
+                        Business Name*
+                      </Label>
+                      <Input
+                        id="businessName"
+                        name="businessName"
+                        placeholder="Enter business name"
+                        value={formData.businessName}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessType" className="text-slate-700">
+                        Business Type*
+                      </Label>
+                      <Select
+                        value={formData.businessType}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, businessType: value })
+                        }
+                      >
+                        <SelectTrigger className="border-slate-300">
+                          <SelectValue placeholder="Select business type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hotel">Hotel</SelectItem>
+                          <SelectItem value="guesthouse">Guesthouse</SelectItem>
+                          <SelectItem value="villa">Villa</SelectItem>
+                          <SelectItem value="apartment">Apartment</SelectItem>
+                          <SelectItem value="resort">Resort</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessRegistrationNumber" className="text-slate-700">
+                        Registration Number*
+                      </Label>
+                      <Input
+                        id="businessRegistrationNumber"
+                        name="businessRegistrationNumber"
+                        placeholder="Enter registration number"
+                        value={formData.businessRegistrationNumber}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="isSriLankan" className="text-slate-700">
+                        Sri Lankan Business
+                      </Label>
+                      <Select
+                        value={formData.isSriLankan ? "true" : "false"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, isSriLankan: value === "true" })
+                        }
+                      >
+                        <SelectTrigger className="border-slate-300">
+                          <SelectValue placeholder="Is this a Sri Lankan business?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Yes</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {formData.isSriLankan ? (
+                      <div className="grid gap-2">
+                        <Label htmlFor="nicNumber" className="text-slate-700">
+                          NIC Number*
+                        </Label>
+                        <Input
+                          id="nicNumber"
+                          name="nicNumber"
+                          placeholder="Enter NIC number"
+                          value={formData.nicNumber}
+                          onChange={handleInputChange}
+                          required={formData.isSriLankan}
+                          className="border-slate-300"
+                        />
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        <Label htmlFor="passportNumber" className="text-slate-700">
+                          Passport Number*
+                        </Label>
+                        <Input
+                          id="passportNumber"
+                          name="passportNumber"
+                          placeholder="Enter passport number"
+                          value={formData.passportNumber}
+                          onChange={handleInputChange}
+                          required={!formData.isSriLankan}
+                          className="border-slate-300"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-type" className="text-slate-700">
-                      Type
-                    </Label>
-                    <Input
-                      id="edit-type"
-                      name="type"
-                      placeholder="Enter activity type"
-                      value={formData.type}
-                      onChange={handleInputChange}
-                      required
-                      className="border-slate-300"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-city" className="text-slate-700">
-                      City
-                    </Label>
-                    <Input
-                      id="edit-city"
-                      name="location.city"
-                      placeholder="Enter city"
-                      value={formData.location?.city || ""}
-                      onChange={handleInputChange}
-                      required
-                      className="border-slate-300"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-district" className="text-slate-700">
-                      District
-                    </Label>
-                    <Input
-                      id="edit-district"
-                      name="location.district"
-                      placeholder="Enter district"
-                      value={formData.location?.district || ""}
-                      onChange={handleInputChange}
-                      className="border-slate-300"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label
-                      htmlFor="edit-priceRangeUSD"
-                      className="text-slate-700"
-                    >
-                      Price Range (USD)
-                    </Label>
-                    <Input
-                      id="edit-priceRangeUSD"
-                      name="priceRangeUSD"
-                      placeholder="Enter price range (e.g., $50-$100)"
-                      value={formData.priceRangeUSD}
-                      onChange={handleInputChange}
-                      className="border-slate-300"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label
-                      htmlFor="edit-vistaVerified"
-                      className="text-slate-700"
-                    >
-                      Vista Verified
-                    </Label>
-                    <Select
-                      value={formData.vistaVerified ? "true" : "false"}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          vistaVerified: value === "true",
-                        })
-                      }
-                    >
-                      <SelectTrigger className="border-slate-300">
-                        <SelectValue placeholder="Select verification status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">Verified</SelectItem>
-                        <SelectItem value="false">Not Verified</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-phone" className="text-slate-700">
-                      Contact Phone
-                    </Label>
-                    <Input
-                      id="edit-phone"
-                      name="contactDetails.phone"
-                      placeholder="Enter phone number"
-                      value={formData.contactDetails?.phone || ""}
-                      onChange={handleInputChange}
-                      className="border-slate-300"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-email" className="text-slate-700">
-                      Contact Email
-                    </Label>
-                    <Input
-                      id="edit-email"
-                      name="contactDetails.email"
-                      placeholder="Enter email"
-                      value={formData.contactDetails?.email || ""}
-                      onChange={handleInputChange}
-                      className="border-slate-300"
-                    />
+
+                  {/* Right Column - Location Details */}
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="address" className="text-slate-700">
+                        Address*
+                      </Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        placeholder="Enter business address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="city" className="text-slate-700">
+                        City*
+                      </Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        placeholder="Enter city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="country" className="text-slate-700">
+                        Country*
+                      </Label>
+                      <Input
+                        id="country"
+                        name="country"
+                        placeholder="Enter country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="phoneNumber" className="text-slate-700">
+                        Phone Number*
+                      </Label>
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        placeholder="Enter phone number with country code"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="maxPropertiesAllowed" className="text-slate-700">
+                        Max Properties Allowed
+                      </Label>
+                      <Input
+                        id="maxPropertiesAllowed"
+                        name="maxPropertiesAllowed"
+                        type="number"
+                        min="1"
+                        placeholder="Enter maximum properties allowed"
+                        value={formData.maxPropertiesAllowed}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="businessDescription" className="text-slate-700">
+                        Business Description
+                      </Label>
+                      <Textarea
+                        id="businessDescription"
+                        name="businessDescription"
+                        placeholder="Enter business description"
+                        value={formData.businessDescription}
+                        onChange={handleInputChange}
+                        className="border-slate-300"
+                        rows={3}
+                      />
+                    </div>
                   </div>
                 </div>
-                <DialogFooter>
+
+                {/* User Account Section */}
+                <div className="border-t border-slate-200 pt-4 mt-4">
+                  <h3 className="text-lg font-medium text-slate-800 mb-4">
+                    User Account Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="user.email" className="text-slate-700">
+                        Email*
+                      </Label>
+                      <Input
+                        id="user.email"
+                        name="user.email"
+                        type="email"
+                        placeholder="Enter user email"
+                        value={formData.user?.email || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            user: { ...formData.user, email: e.target.value },
+                          })
+                        }
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="user.name" className="text-slate-700">
+                        Name*
+                      </Label>
+                      <Input
+                        id="user.name"
+                        name="user.name"
+                        placeholder="Enter user name"
+                        value={formData.user?.name || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            user: { ...formData.user, name: e.target.value },
+                          })
+                        }
+                        required
+                        className="border-slate-300"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-6">
                   <Button
                     type="button"
                     variant="outline"
@@ -1397,7 +1832,7 @@ export const EntityManagement = ({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={updateMutation.isPending}
+                    disabled={updateMutation.isPending || uploadingImages}
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                   >
                     {updateMutation.isPending ? "Updating..." : "Save Changes"}
@@ -1408,105 +1843,164 @@ export const EntityManagement = ({
           </DialogContent>
         </Dialog>
       )}
-
-      {/* View Activity Dialog */}
+      {/* View Transport Dialog */}
+      {/* View Host Dialog */}
+      {/* View Host Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">Activity Details</DialogTitle>
+            <DialogTitle className="text-xl">Host Details</DialogTitle>
+            {currentEntity?.status === "pending" && (
+              <DialogDescription className="text-orange-600">
+                This host is pending verification
+              </DialogDescription>
+            )}
           </DialogHeader>
           {currentEntity && (
-            <ScrollArea className="max-h-[60vh]">
-              {viewDetails ? (
-                viewDetails(currentEntity)
-              ) : (
-                <div className="p-2">
-                  <div className="flex flex-col items-center pb-4 mb-4 border-b border-slate-200">
-                    <Avatar className="h-20 w-20 mb-3">
-                      <AvatarImage
-                        src={currentEntity.images?.[0]}
-                        alt={currentEntity.title}
-                      />
-                      <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xl">
-                        {currentEntity.title
-                          ?.split(" ")
-                          .map((word) => word[0])
-                          .join("")
-                          .slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h3 className="text-xl font-bold text-slate-800">
-                      {currentEntity.title}
-                    </h3>
-                    <p className="text-slate-500">{currentEntity.type}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column - Host Identity */}
+              <div className="flex flex-col items-center p-4 border rounded-lg border-slate-200 bg-slate-50">
+                <div className="h-48 w-full bg-slate-100 rounded-md flex items-center justify-center mb-4">
+                  <Building2 className="h-12 w-12 text-slate-400" />
+                </div>
+
+                <h3 className="text-2xl font-bold text-slate-800">
+                  {currentEntity.businessName || "No Business Name"}
+                </h3>
+                <p className="text-slate-500 mb-4 capitalize">
+                  {currentEntity.businessType || "No Type"}
+                </p>
+
+                <div className="w-full mt-2">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm font-medium text-slate-700">
+                      Status
+                    </span>
+                    <Badge variant={
+                      currentEntity.status === "verified" ? "default" :
+                        currentEntity.status === "suspended" ? "destructive" :
+                          currentEntity.status === "pending" ? "warning" : "outline"
+                    }>
+                      {currentEntity.status ?
+                        currentEntity.status.charAt(0).toUpperCase() + currentEntity.status.slice(1) :
+                        "Unknown"}
+                    </Badge>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-slate-400" />
-                      <span className="text-slate-600">
-                        {currentEntity.location?.city},{" "}
-                        {currentEntity.location?.district}
-                      </span>
-                    </div>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm font-medium text-slate-700">
+                      Registration
+                    </span>
+                    <span className="text-sm text-slate-600">
+                      {currentEntity.businessRegistrationNumber || "N/A"}
+                    </span>
+                  </div>
 
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-1">
-                        Price Range
-                      </h4>
-                      <p className="text-slate-600">
-                        {currentEntity.priceRangeUSD}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-1">
-                        Vista Verification
-                      </h4>
-                      <Badge
-                        variant={
-                          currentEntity.vistaVerified ? "default" : "outline"
-                        }
-                      >
-                        {currentEntity.vistaVerified
-                          ? "Verified"
-                          : "Not Verified"}
-                      </Badge>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-1">
-                        Rating
-                      </h4>
-                      <div className="flex items-center text-yellow-600">
-                        ⭐ {currentEntity.reviews?.vistaReview?.rating || "N/A"}
-                        <span className="ml-1 text-xs text-slate-500">
-                          ({currentEntity.reviews?.travelerReviews?.length || 0}{" "}
-                          reviews)
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-1">
-                        Contact Details
-                      </h4>
-                      <div className="text-sm text-slate-600">
-                        <p>
-                          {currentEntity.contactDetails?.phone || "No phone"}
-                        </p>
-                        <p>
-                          {currentEntity.contactDetails?.email || "No email"}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-slate-700">
+                      Properties Allowed
+                    </span>
+                    <span className="text-sm text-slate-600">
+                      {currentEntity.maxPropertiesAllowed || "1"}
+                    </span>
                   </div>
                 </div>
-              )}
-            </ScrollArea>
+              </div>
+
+              {/* Right Column - Host Details */}
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg border-slate-200">
+                  <h4 className="text-sm font-medium text-slate-700 mb-2">
+                    Identification
+                  </h4>
+                  <p className="text-slate-600 mb-2">
+                    {currentEntity.isSriLankan ?
+                      `NIC: ${currentEntity.nicNumber || "Not provided"}` :
+                      `Passport: ${currentEntity.passportNumber || "Not provided"}`
+                    }
+                  </p>
+                  <p className="text-slate-600">
+                    {currentEntity.isSriLankan ? "Sri Lankan Business" : "Foreign Business"}
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg border-slate-200">
+                  <h4 className="text-sm font-medium text-slate-700 mb-2">
+                    Location
+                  </h4>
+                  <div className="flex items-start space-x-2 mb-2">
+                    <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
+                    <span className="text-slate-600">
+                      {currentEntity.address || "No address"}
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span className="text-slate-600">
+                      {currentEntity.city || "No city"},
+                    </span>
+                    <span className="text-slate-600">
+                      {currentEntity.country || "No country"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 border rounded-lg border-slate-200">
+                  <h4 className="text-sm font-medium text-slate-700 mb-2">
+                    Contact Information
+                  </h4>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Phone className="h-4 w-4 text-slate-400" />
+                    <span className="text-slate-600">
+                      {currentEntity.phoneNumber || "No phone number"}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4 text-slate-400" />
+                    <span className="text-slate-600">
+                      {currentEntity.user?.email || "No email"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 border rounded-lg border-slate-200">
+                  <h4 className="text-sm font-medium text-slate-700 mb-2">
+                    Business Description
+                  </h4>
+                  <p className="text-slate-600">
+                    {currentEntity.businessDescription || "No description available"}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
-            {updateEntity && (
+
+          <DialogFooter className="gap-4 sm:gap-0mt-6">
+            {currentEntity?.status === "pending" && (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setDeclineReasonDialogOpen(true);
+                  }}
+                >
+                  <X className="h-4 w-4 mx-4" /> Decline
+                </Button>
+                <Button
+                  onClick={() => handleApproveHost(currentEntity.id)}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={approveMutation.isPending}
+                >
+                  {approveMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-2" />
+                  )}
+                  Approve
+                </Button>
+              </div>
+            )}
+
+            {updateEntity && currentEntity?.status !== "pending" && (
               <Button
                 variant="outline"
                 onClick={() => currentEntity && openEditDialog(currentEntity)}
@@ -1524,13 +2018,55 @@ export const EntityManagement = ({
         </DialogContent>
       </Dialog>
 
+      {/* Decline Reason Dialog */}
+      <Dialog open={isDeclineReasonDialogOpen} onOpenChange={setDeclineReasonDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reason for Declining</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for declining this host application.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Textarea
+              placeholder="Enter reason for declining..."
+              value={declineReason}
+              onChange={(e) => setDeclineReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeclineReasonDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                handleDeclineHost(currentEntity?.id, declineReason);
+                setDeclineReasonDialogOpen(false);
+              }}
+              disabled={declineMutation.isPending}
+            >
+              {declineMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <X className="h-4 w-4 mr-2" />
+              )}
+              Submit Decline
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Delete Confirmation Dialog */}
       {deleteEntity && (
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-xl text-red-600">
-                Delete Activity
+                Delete Transport
               </DialogTitle>
               <DialogDescription>
                 This action cannot be undone.
@@ -1541,12 +2077,12 @@ export const EntityManagement = ({
                 <XCircle className="h-5 w-5 mr-2 flex-shrink-0" />
                 <div>
                   <p className="font-medium">
-                    Are you sure you want to delete this activity?
+                    Are you sure you want to delete this transport service?
                   </p>
                   <p className="mt-1 text-sm text-red-700">
                     Deleting{" "}
                     <span className="font-semibold">
-                      {currentEntity?.title}
+                      {currentEntity?.title || "this transport"}
                     </span>{" "}
                     will remove all its data from your platform.
                   </p>

@@ -125,7 +125,8 @@ export const EntityManagement = ({
   additionalTabs = [],
   headerTitle = "Management",
   headerDescription = `Manage all your ${entityPlural}`,
-  addButtonLabel = `Add New ${entityName.charAt(0).toUpperCase() + entityName.slice(1)
+  addButtonLabel = `Add New ${
+    entityName.charAt(0).toUpperCase() + entityName.slice(1)
   }`,
   emptyState,
   createForm,
@@ -197,7 +198,8 @@ export const EntityManagement = ({
         newEntity,
       ]);
       toast.success(
-        `${entityName.charAt(0).toUpperCase() + entityName.slice(1)
+        `${
+          entityName.charAt(0).toUpperCase() + entityName.slice(1)
         } added successfully`,
         {
           description: `${newEntity.name} has been added to your ${entityName} list.`,
@@ -483,10 +485,11 @@ export const EntityManagement = ({
                   </div>
                 )}
                 <div
-                  className={`${enableSearch
+                  className={`${
+                    enableSearch
                       ? "md:col-span-6 lg:col-span-7"
                       : "md:col-span-12"
-                    } flex flex-wrap justify-start md:justify-end gap-2`}
+                  } flex flex-wrap justify-start md:justify-end gap-2`}
                 >
                   {enableFilters && (
                     <>
@@ -539,8 +542,9 @@ export const EntityManagement = ({
                         {visibleColumns.map((column) => (
                           <TableHead
                             key={column.key}
-                            className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
-                              } ${column.className || ""}`}
+                            className={`font-semibold text-slate-700 ${
+                              column.sortable ? "cursor-pointer" : ""
+                            } ${column.className || ""}`}
                             onClick={() =>
                               column.sortable && requestSort(column.key)
                             }
@@ -549,10 +553,11 @@ export const EntityManagement = ({
                               {column.label}
                               {sortConfig.key === column.key && (
                                 <ChevronDown
-                                  className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
+                                  className={`ml-1 h-4 w-4 ${
+                                    sortConfig.direction === "desc"
                                       ? "rotate-180"
                                       : ""
-                                    }`}
+                                  }`}
                                 />
                               )}
                             </div>
@@ -688,8 +693,9 @@ export const EntityManagement = ({
                             {visibleColumns.map((column) => (
                               <TableHead
                                 key={column.key}
-                                className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
-                                  } ${column.className || ""}`}
+                                className={`font-semibold text-slate-700 ${
+                                  column.sortable ? "cursor-pointer" : ""
+                                } ${column.className || ""}`}
                                 onClick={() =>
                                   column.sortable && requestSort(column.key)
                                 }
@@ -698,10 +704,11 @@ export const EntityManagement = ({
                                   {column.label}
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
+                                      className={`ml-1 h-4 w-4 ${
+                                        sortConfig.direction === "desc"
                                           ? "rotate-180"
                                           : ""
-                                        }`}
+                                      }`}
                                     />
                                   )}
                                 </div>
@@ -814,8 +821,9 @@ export const EntityManagement = ({
                             {visibleColumns.map((column) => (
                               <TableHead
                                 key={column.key}
-                                className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
-                                  } ${column.className || ""}`}
+                                className={`font-semibold text-slate-700 ${
+                                  column.sortable ? "cursor-pointer" : ""
+                                } ${column.className || ""}`}
                                 onClick={() =>
                                   column.sortable && requestSort(column.key)
                                 }
@@ -824,10 +832,11 @@ export const EntityManagement = ({
                                   {column.label}
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
+                                      className={`ml-1 h-4 w-4 ${
+                                        sortConfig.direction === "desc"
                                           ? "rotate-180"
                                           : ""
-                                        }`}
+                                      }`}
                                     />
                                   )}
                                 </div>
@@ -940,8 +949,9 @@ export const EntityManagement = ({
                             {visibleColumns.map((column) => (
                               <TableHead
                                 key={column.key}
-                                className={`font-semibold text-slate-700 ${column.sortable ? "cursor-pointer" : ""
-                                  } ${column.className || ""}`}
+                                className={`font-semibold text-slate-700 ${
+                                  column.sortable ? "cursor-pointer" : ""
+                                } ${column.className || ""}`}
                                 onClick={() =>
                                   column.sortable && requestSort(column.key)
                                 }
@@ -950,10 +960,11 @@ export const EntityManagement = ({
                                   {column.label}
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
-                                      className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
+                                      className={`ml-1 h-4 w-4 ${
+                                        sortConfig.direction === "desc"
                                           ? "rotate-180"
                                           : ""
-                                        }`}
+                                      }`}
                                     />
                                   )}
                                 </div>
@@ -1086,141 +1097,122 @@ export const EntityManagement = ({
               })
             ) : (
               <form onSubmit={handleAddEntity}>
-                <div className="grid gap-6 py-4">
-                  {/* Row 1 - Title and Type */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-slate-700 font-medium">
-                        Activity Title <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="title"
-                        name="title"
-                        placeholder="Enter activity title"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="type" className="text-slate-700 font-medium">
-                        Type <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="type"
-                        name="type"
-                        placeholder="Enter activity type"
-                        value={formData.type}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="title" className="text-slate-700">
+                      Activity Title
+                    </Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      placeholder="Enter activity title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
                   </div>
-
-                  {/* Row 2 - Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="city" className="text-slate-700 font-medium">
-                        City <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="city"
-                        name="location.city"
-                        placeholder="Enter city"
-                        value={formData.location?.city || ""}
-                        onChange={handleInputChange}
-                        required
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="district" className="text-slate-700 font-medium">
-                        District
-                      </Label>
-                      <Input
-                        id="district"
-                        name="location.district"
-                        placeholder="Enter district"
-                        value={formData.location?.district || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="type" className="text-slate-700">
+                      Type
+                    </Label>
+                    <Input
+                      id="type"
+                      name="type"
+                      placeholder="Enter activity type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
                   </div>
-
-                  {/* Row 3 - Price and Verification */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="priceRangeUSD" className="text-slate-700 font-medium">
-                        Price Range (USD)
-                      </Label>
-                      <Input
-                        id="priceRangeUSD"
-                        name="priceRangeUSD"
-                        placeholder="Enter price range (e.g., $50-$100)"
-                        value={formData.priceRangeUSD}
-                        onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="vistaVerified" className="text-slate-700 font-medium">
-                        Vista Verified
-                      </Label>
-                      <Select
-                        value={formData.vistaVerified ? "true" : "false"}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            vistaVerified: value === "true",
-                          })
-                        }
-                      >
-                        <SelectTrigger className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                          <SelectValue placeholder="Select verification status" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="true" className="hover:bg-slate-100">Verified</SelectItem>
-                          <SelectItem value="false" className="hover:bg-slate-100">Not Verified</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="city" className="text-slate-700">
+                      City
+                    </Label>
+                    <Input
+                      id="city"
+                      name="location.city"
+                      placeholder="Enter city"
+                      value={formData.location?.city || ""}
+                      onChange={handleInputChange}
+                      required
+                      className="border-slate-300"
+                    />
                   </div>
-
-                  {/* Row 4 - Contact Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-slate-700 font-medium">
-                        Contact Phone
-                      </Label>
-                      <Input
-                        id="phone"
-                        name="contactDetails.phone"
-                        placeholder="Enter phone number"
-                        value={formData.contactDetails?.phone || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-slate-700 font-medium">
-                        Contact Email
-                      </Label>
-                      <Input
-                        id="email"
-                        name="contactDetails.email"
-                        placeholder="Enter email"
-                        value={formData.contactDetails?.email || ""}
-                        onChange={handleInputChange}
-                        className="border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="district" className="text-slate-700">
+                      District
+                    </Label>
+                    <Input
+                      id="district"
+                      name="location.district"
+                      placeholder="Enter district"
+                      value={formData.location?.district || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="priceRangeUSD" className="text-slate-700">
+                      Price Range (USD)
+                    </Label>
+                    <Input
+                      id="priceRangeUSD"
+                      name="priceRangeUSD"
+                      placeholder="Enter price range (e.g., $50-$100)"
+                      value={formData.priceRangeUSD}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="vistaVerified" className="text-slate-700">
+                      Vista Verified
+                    </Label>
+                    <Select
+                      value={formData.vistaVerified ? "true" : "false"}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          vistaVerified: value === "true",
+                        })
+                      }
+                    >
+                      <SelectTrigger className="border-slate-300">
+                        <SelectValue placeholder="Select verification status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Verified</SelectItem>
+                        <SelectItem value="false">Not Verified</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone" className="text-slate-700">
+                      Contact Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="contactDetails.phone"
+                      placeholder="Enter phone number"
+                      value={formData.contactDetails?.phone || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email" className="text-slate-700">
+                      Contact Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="contactDetails.email"
+                      placeholder="Enter email"
+                      value={formData.contactDetails?.email || ""}
+                      onChange={handleInputChange}
+                      className="border-slate-300"
+                    />
                   </div>
                 </div>
                 <DialogFooter>

@@ -2,22 +2,21 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
-const HotelManagement = dynamic(() => import("./hotel-management"), {
+const CustomerManagement = dynamic(() => import("./customer-management"), {
   ssr: false,
 });
 
 const PageWrapper = () => {
-  // Mock API functions
   const [AccessToken, setAccessToken] = useState("");
   useEffect(() => {
     const datafromlocalstorage = JSON.parse(localStorage.getItem("user"));
     setAccessToken(datafromlocalstorage?.data?.accessToken);
     console.log(datafromlocalstorage?.data?.accessToken);
   }, []);
-  const fetchFunction = async () => {
 
+  const fetchFunction = async () => {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/merchants`,
       {
         headers: {
           Authorization: `Bearer ${AccessToken}`,
@@ -26,18 +25,11 @@ const PageWrapper = () => {
       }
     );
     return response.data.data;
-
-  }
+  };
 
   const addFunction = async (newEntity) => {
-    // // Simulating API call
-    // await new Promise((resolve) => setTimeout(resolve, 800));
-    // return {
-    //   id: Date.now(),
-    //   ...newHost,
-    // };
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/merchants`,
       newEntity,
       {
         headers: {
@@ -49,21 +41,23 @@ const PageWrapper = () => {
     return response.data.data;
   };
 
-  const updateFunction = async (updatedHost) => {
+  const updateFunction = async (updatedEntity) => {
+    alert(JSON.stringify(updatedEntity));
+    // Simulating API call
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties/${updatedEntity.id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/merchants/${updatedEntity.id}`,
       updatedEntity,
       {
         withCredentials: true,
       }
     );
     return updatedEntity;
-
   };
 
   const deletFucntion = async (id) => {
+    // Simulating API call
     const response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/merchants/${id}`,
       {
         withCredentials: true,
       }
@@ -73,10 +67,10 @@ const PageWrapper = () => {
 
   return (
     <>
-      <HotelManagement
+      <CustomerManagement
         fetchEntities={fetchFunction}
-        addEntity={addFunction}
-        updateEntity={updateFunction}
+        // addEntity={addFunction}
+        // updateEntity={updateFunction}
         deleteEntity={deletFucntion}
       />
     </>
