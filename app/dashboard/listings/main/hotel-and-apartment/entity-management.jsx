@@ -28,6 +28,7 @@ import {
   Phone,
   Globe,
   X,
+  Check,
 } from "lucide-react";
 import {
   Table,
@@ -476,6 +477,33 @@ export const EntityManagement = ({
     }
   };
 
+  const handleAcceptEntity = async (id) => {
+    const response = await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/properties/${id}/approval-status`,
+      {
+        "approvalStatus": "approved"
+      },
+      {
+
+        withCredentials: true,
+      }
+    );
+
+  }
+
+  const handleDeclineEntity = async (id) => {
+    const response = await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/properties/${id}/approval-status`,
+      {
+        "approvalStatus": "declined"
+      },
+      {
+        withCredentials: true,
+      }
+    );
+
+  }
+
   const openDeleteDialog = (entity) => {
     setCurrentEntity(entity);
     setIsDeleteDialogOpen(true);
@@ -778,6 +806,19 @@ export const EntityManagement = ({
                                   >
                                     <Eye className="mr-2 h-4 w-4 text-slate-500" />
                                     View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleAcceptEntity(entity.id)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Check className="mr-2 h-4 w-4 text-slate-500" />
+                                    Approve
+                                  </DropdownMenuItem><DropdownMenuItem
+                                    onClick={() => handleDeclineEntity(entity.id)}
+                                    className="cursor-pointer"
+                                  >
+                                    <X className="mr-2 h-4 w-4 text-slate-500" />
+                                    Decline
                                   </DropdownMenuItem>
 
                                   {updateEntity && (
