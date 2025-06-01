@@ -427,12 +427,46 @@ export const EntityManagement = ({
     }
   };
 
-  const handleUpdateEntity = (e) => {
+  // const handleUpdateEntity = (e) => {
+  //   e.preventDefault();
+  //   if (updateEntity && currentEntity) {
+  //     updateMutation.mutate({ ...currentEntity, ...formData });
+  //   }
+  // };
+
+  const handleUpdateEntity = async (e) => {
     e.preventDefault();
-    if (updateEntity && currentEntity) {
-      updateMutation.mutate({ ...currentEntity, ...formData });
+
+    if (!currentEntity) return;
+
+    const updatedFormData = new FormData();
+    updatedFormData.append("id", currentEntity.id);
+    updatedFormData.append("title", formData.title);
+    updatedFormData.append("transportTypes", formData.transportTypes);
+    updatedFormData.append("address", formData.address);
+    updatedFormData.append("city", formData.city);
+    updatedFormData.append("district", formData.district);
+    updatedFormData.append("province", formData.province);
+    updatedFormData.append("serviceArea", formData.serviceArea);
+    updatedFormData.append("description", formData.description);
+    updatedFormData.append("email", formData.email);
+    updatedFormData.append("website", formData.website);
+    updatedFormData.append("phone", formData.phone);
+    updatedFormData.append("amenities", formData.amenities);
+    updatedFormData.append("vistaVerified", formData.vistaVerified);
+
+    // Append new images if any
+    selectedFiles.forEach((file) => {
+      updatedFormData.append("images", file);
+    });
+
+    if (updateEntity) {
+      updateMutation.mutate(updatedFormData);
     }
   };
+
+
+
 
   const handleDeleteEntity = () => {
     if (deleteEntity && currentEntity) {
@@ -442,9 +476,16 @@ export const EntityManagement = ({
 
   const openEditDialog = (entity) => {
     setCurrentEntity(entity);
+    const transportTypeIds = entity.transportTypes?.map(type => type.id) || [];
+
+    // Transform images to array of URLs
+    const imageUrls = entity.images?.map(img => img.imageUrl) || [];
+
     setFormData({
       ...initialFormData,
       ...entity,
+      transportTypes: transportTypeIds,
+      images: imageUrls
     });
     setIsEditDialogOpen(true);
   };
@@ -639,8 +680,8 @@ export const EntityManagement = ({
                 )}
                 <div
                   className={`${enableSearch
-                      ? "md:col-span-6 lg:col-span-7"
-                      : "md:col-span-12"
+                    ? "md:col-span-6 lg:col-span-7"
+                    : "md:col-span-12"
                     } flex flex-wrap justify-start md:justify-end gap-2`}
                 >
                   {enableFilters && (
@@ -715,8 +756,8 @@ export const EntityManagement = ({
                               {sortConfig.key === column.key && (
                                 <ChevronDown
                                   className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                      ? "rotate-180 duration"
-                                      : ""
+                                    ? "rotate-180 duration"
+                                    : ""
                                     }`}
                                 />
                               )}
@@ -866,8 +907,8 @@ export const EntityManagement = ({
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
                                       className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
+                                        ? "rotate-180"
+                                        : ""
                                         }`}
                                     />
                                   )}
@@ -992,8 +1033,8 @@ export const EntityManagement = ({
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
                                       className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
+                                        ? "rotate-180"
+                                        : ""
                                         }`}
                                     />
                                   )}
@@ -1118,8 +1159,8 @@ export const EntityManagement = ({
                                   {sortConfig.key === column.key && (
                                     <ChevronDown
                                       className={`ml-1 h-4 w-4 ${sortConfig.direction === "desc"
-                                          ? "rotate-180"
-                                          : ""
+                                        ? "rotate-180"
+                                        : ""
                                         }`}
                                     />
                                   )}

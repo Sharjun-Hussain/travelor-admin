@@ -79,6 +79,7 @@ import { toast } from "sonner";
 import { exportToExcel } from "@/lib/utils";
 import axios from "axios";
 import { Checkbox } from "@/components/ui/checkbox";
+import Image from "next/image";
 
 const defaultStatusOptions = [
   { value: "all", label: "All Statuses" },
@@ -383,9 +384,8 @@ export const EntityManagement = ({
     newformdata.append("checkInTime", formData.checkInTime);
     newformdata.append("cancellationPolicy", formData.cancellationPolicy);
     newformdata.append("checkOutTime", formData.checkOutTime);
-    newformdata.append("country", formData.country);
     formData.amenities.forEach(id => {
-      newformdata.append("amenities[]", id);
+      newformdata.append("amenities", id);
     });
     selectedFiles.forEach((file) => {
       newformdata.append("images", file);
@@ -405,11 +405,44 @@ export const EntityManagement = ({
     }
   };
 
-  const handleUpdateEntity = (e) => {
+  const handleUpdateEntity = async (e) => {
     e.preventDefault();
-    if (updateEntity && currentEntity) {
-      updateMutation.mutate({ ...currentEntity, ...formData });
-    }
+
+    if (!currentEntity) return;
+
+    const updatedFormData = new FormData();
+    updatedFormData.append("id", currentEntity.id);
+    updatedFormData.append("title", formData.title);
+    updatedFormData.append("propertyType", formData.propertyType);
+    updatedFormData.append("address", formData.address);
+    updatedFormData.append("city", formData.city);
+    updatedFormData.append("district", formData.district);
+    updatedFormData.append("province", formData.province);
+    updatedFormData.append("country", formData.country);
+    updatedFormData.append("description", formData.description);
+    updatedFormData.append("email", formData.email);
+    updatedFormData.append("website", formData.website);
+    updatedFormData.append("postalCode", "12122"); // Update with actual value if needed
+    updatedFormData.append("latitude", formData.latitude);
+    updatedFormData.append("longitude", formData.longitude);
+    updatedFormData.append("phone", formData.phone);
+    updatedFormData.append("checkInTime", formData.checkInTime);
+    updatedFormData.append("cancellationPolicy", formData.cancellationPolicy);
+    updatedFormData.append("checkOutTime", formData.checkOutTime);
+    updatedFormData.append("vistaVerified", formData.vistaVerified);
+    updatedFormData.append("isActive", formData.isActive);
+
+    // Append amenities
+    formData.amenities.forEach(id => {
+      updatedFormData.append("amenities", id);
+    });
+
+    // Append new images
+    selectedFiles.forEach(file => {
+      updatedFormData.append("images", file);
+    });
+
+    updateMutation.mutate(updatedFormData);
   };
 
   const handleDeleteEntity = () => {
@@ -420,9 +453,17 @@ export const EntityManagement = ({
 
   const openEditDialog = (entity) => {
     setCurrentEntity(entity);
+    // Transform amenities to array of IDs
+    const amenityIds = entity.amenities?.map(a => a.id) || [];
+
+    // Transform images to array of URLs
+    const imageUrls = entity.images?.map(img => img.imageUrl) || [];
+
     setFormData({
       ...initialFormData,
       ...entity,
+      amenities: amenityIds,
+      images: imageUrls
     });
     setIsEditDialogOpen(true);
   };
@@ -738,6 +779,7 @@ export const EntityManagement = ({
                                     <Eye className="mr-2 h-4 w-4 text-slate-500" />
                                     View Details
                                   </DropdownMenuItem>
+
                                   {updateEntity && (
                                     <DropdownMenuItem
                                       onClick={() => openEditDialog(entity)}
@@ -1699,14 +1741,15 @@ export const EntityManagement = ({
                       />
                     </div>
 
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="title">Property Name</Label>
+                        <Label htmlFor="latitude">latitude</Label>
                         <Input
-                          id="title"
-                          name="title"
-                          placeholder="Enter property name"
-                          value={formData.title}
+                          id="latitude"
+                          name="latitude"
+                          placeholder="Enter latitude"
+                          value={formData.latitude}
                           onChange={handleInputChange}
                           required
                           className="border-slate-300"
@@ -1715,12 +1758,12 @@ export const EntityManagement = ({
 
 
                       <div className="grid gap-2">
-                        <Label htmlFor="title">Property Name</Label>
+                        <Label htmlFor="longitude">longitude</Label>
                         <Input
-                          id="title"
-                          name="title"
-                          placeholder="Enter property name"
-                          value={formData.title}
+                          id="longitude"
+                          name="longitude"
+                          placeholder="Enter longitude"
+                          value={formData.longitude}
                           onChange={handleInputChange}
                           required
                           className="border-slate-300"
@@ -1810,18 +1853,36 @@ export const EntityManagement = ({
                         </Select>
                       </div>
                     </div>
+
                     <div className="grid gap-2">
                       <Label htmlFor="images" className="text-slate-700">
                         Images
                       </Label>
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap gap-2">
+                          {currentEntity?.images?.map((image, index) => (
+                            <div key={index} className="relative h-20 w-20">
+                              <Image
+                                src={image.imageUrl}
+                                alt={`Property ${index}`}
+                                fill
+                                className="object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                              >
+                                <X className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          ))}
                           {formData.images.map((image, index) => (
-                            <div key={index} className="relative">
+                            <div key={`new-${index}`} className="relative h-20 w-20">
                               <img
                                 src={image}
-                                alt={`Transport ${index}`}
-                                className="h-20 w-20 object-cover rounded-md"
+                                alt={`New image ${index}`}
+                                className="h-full w-full object-cover rounded-md"
                               />
                               <button
                                 type="button"
@@ -1857,6 +1918,28 @@ export const EntityManagement = ({
                             </>
                           )}
                         </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      Amanities
+                      <div className="flex gap-4 mt-3">
+                        {fetchedAmanities.map((item, index) => {
+                          return (
+                            <div
+                              checked={formData.amenities.includes(item.id)}
+                              onChange={() => handleCheckChange(item.id)}
+                              id={index} className="flex items-center space-x-2">
+                              <Checkbox id={item.name} />
+                              <label
+                                htmlFor={item.name}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {item.name}
+                              </label>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   </div>

@@ -30,12 +30,7 @@ const PageWrapper = () => {
   }
 
   const addFunction = async (newEntity) => {
-    // // Simulating API call
-    // await new Promise((resolve) => setTimeout(resolve, 800));
-    // return {
-    //   id: Date.now(),
-    //   ...newHost,
-    // };
+
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties`,
       newEntity,
@@ -49,11 +44,14 @@ const PageWrapper = () => {
     return response.data.data;
   };
 
-  const updateFunction = async (updatedHost) => {
+  const updateFunction = async (updatedEntity) => {
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties/${updatedEntity.id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/merchants/properties/${updatedEntity.get('id')}`,
       updatedEntity,
       {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
         withCredentials: true,
       }
     );

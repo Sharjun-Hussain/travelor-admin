@@ -45,9 +45,12 @@ const PageWrapper = () => {
     alert(JSON.stringify(updatedEntity));
     // Simulating API call
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-agencies/${updatedEntity.id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/transport-agencies/${updatedEntity.get('id')}`,
       updatedEntity,
       {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
         withCredentials: true,
       }
     );
