@@ -203,7 +203,7 @@ const data = {
       items: [
         {
           title: "Properties",
-          url: "/dashboard/listings/main/homestays",
+          url: "/dashboard/listings/main/homestay",
         },
         // {
         //   title: "Room Types",
